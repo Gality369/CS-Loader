@@ -140,6 +140,7 @@ int main() {
     unsigned char* tmp = buf;
     tmp = base64_encode(tmp, len);
     len = strlen((const char *)tmp);
+    printf("%d\n", len);
     RC4(tmp, key, len);
     printf("%s\n\n", base64_encode(tmp, len));
     return 0;
