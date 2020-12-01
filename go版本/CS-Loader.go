@@ -1,6 +1,6 @@
 //Author: Gality
 //Name：CS-Loader.go
-//Usage: go build -ldflags="-H windowsgui" CS-Loader.go
+//Usage: 
 //require: None
 //Description: load shellcode from img
 //E-mail: gality365@gmail.com
