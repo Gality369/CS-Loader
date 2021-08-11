@@ -85,6 +85,7 @@ go: go
    > 需要安装pywin32:https://github.com/mhammond/pywin32
 
 2. ~~目标是什么环境就在什么环境上打包,否则可能会出现无法上线的情况,不推荐使用py3对项目进行改造,ctypes对py3的支持不太好,会有些莫名其妙的bug~~
+    感谢KingSF5师傅对python3版本的修复(崇拜~)
 
 3. 经过测试,C版本在X86Debug模式编译下无任何问题,Release模式下会存在莫名bug,在某些电脑上无法正常上线,请根据需求自行测试
 
