@@ -1,5 +1,5 @@
 # CS-Avoid-killing
-![Chinese README](https://github.com/Gality369/CS-Loader/blob/master/README.md)
+[Chinese README](https://github.com/Gality369/CS-Loader/blob/master/README_Chinese.md)
 
 Overall, malware identification through the application's binary feature strings is still the most commonly used static analysis by antivirus software, while dynamic analysis (sandboxing, virtual machines, etc.) can be bypassed by anti-debugging, anti-sandboxing, and other techniques, so minimizing the binary features of a malicious program is still an important means of avoiding detection and killing.
 
