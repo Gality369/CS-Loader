@@ -1,6 +1,6 @@
 // 参考 https://github.com/DreamSoule/ollvm17
-#ifndef Kotoamatsukami_UTILS_H
-#define Kotoamatsukami_UTILS_H
+#ifndef KObfucator_UTILS_H
+#define KObfucator_UTILS_H
 // LLVM libs
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Function.h"

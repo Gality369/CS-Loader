@@ -142,7 +142,7 @@ PreservedAnalyses ForObsPass::run(Module &M, ModuleAnalysisManager &AM)
     IntegerType *intType = Type::getInt32Ty(context);
     Value *N = ConstantInt::get(intType, 10); // 外循环边界
     Value *M1 = ConstantInt::get(intType, 5);  // 内循环边界
-    readConfig("/home/zzzccc/cxzz/Kotoamatsukami/config/config.json");
+    readConfig("/home/zzzccc/cxzz/KObfucator/config/config.json");
     if (ForObs.model){
         for (llvm::Function &F : M) {
             int addCount = 0;

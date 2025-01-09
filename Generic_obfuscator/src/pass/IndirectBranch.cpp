@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 using namespace llvm;
-namespace Kotoamatsukami {
+namespace KObfucator {
 namespace IndirectBranch {
 
     void process(Function& F)
@@ -21,7 +21,7 @@ namespace IndirectBranch {
         Type* PtrValueType = Type::getIntNTy(F.getContext(), PtrSize * 8);
         auto module = F.getParent();
 
-        std::map<BasicBlock*, Kotoamatsukami::IndirectBBinfo> indirectBBinfos;
+        std::map<BasicBlock*, KObfucator::IndirectBBinfo> indirectBBinfos;
         int indirectBBs_count = 0;
         std::vector<BranchInst*> branchInsts;
         auto gloablName = F.getName().str() + "_Jmuptable";
@@ -115,10 +115,10 @@ namespace IndirectBranch {
         }
     }
 }
-} // namespace Kotoamatsukami
+} // namespace KObfucator
 PreservedAnalyses IndirectBranch::run(Module& M, ModuleAnalysisManager& AM)
 {
-    readConfig("/home/zzzccc/cxzz/Kotoamatsukami/config/config.json");
+    readConfig("/home/zzzccc/cxzz/KObfucator/config/config.json");
     bool is_processed = false;
     if (indirect_branch.model) {
         for (llvm::Function& F : M) {
@@ -134,7 +134,7 @@ PreservedAnalyses IndirectBranch::run(Module& M, ModuleAnalysisManager& AM)
             if (!F.hasExactDefinition()) {
                 continue;
             }
-            Kotoamatsukami::IndirectBranch::process(F);
+            KObfucator::IndirectBranch::process(F);
             is_processed = true;
         }
     }

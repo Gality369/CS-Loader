@@ -180,7 +180,7 @@ void funcLoopen(IRBuilder<> &builder, LLVMContext &context, Function &F, Functio
 
 PreservedAnalyses Loopen::run(Module &M, ModuleAnalysisManager &AM)
 {
-    readConfig("/home/zzzccc/cxzz/Kotoamatsukami/config/config.json");
+    readConfig("/home/zzzccc/cxzz/KObfucator/config/config.json");
     if (loopen.model){
         for (llvm::Function &F : M) {
             xCount = 0;

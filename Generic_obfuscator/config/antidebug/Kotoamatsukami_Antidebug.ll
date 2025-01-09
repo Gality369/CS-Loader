@@ -1,5 +1,5 @@
-; ModuleID = 'Kotoamatsukami_Antidebug.c'
-source_filename = "Kotoamatsukami_Antidebug.c"
+; ModuleID = 'KObfucator_Antidebug.c'
+source_filename = "KObfucator_Antidebug.c"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
@@ -19,7 +19,7 @@ target triple = "x86_64-unknown-linux-gnu"
 @.str.13 = private unnamed_addr constant [38 x i8] c"Debugger detected by parent process!\0A\00", align 1
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local void @Kotoamatsukami_Antidebug1() #0 {
+define dso_local void @KObfucator_Antidebug1() #0 {
   %1 = call i64 (i32, ...) @ptrace(i32 noundef 0, i32 noundef 0, i32 noundef 0, i32 noundef 0) #5
   %2 = icmp slt i64 %1, 0
   br i1 %2, label %3, label %5
@@ -43,7 +43,7 @@ declare i32 @printf(ptr noundef, ...) #2
 declare void @_exit(i32 noundef) #3
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local void @Kotoamatsukami_Antidebug2() #0 {
+define dso_local void @KObfucator_Antidebug2() #0 {
   %1 = alloca i32, align 4
   %2 = alloca i32, align 4
   %3 = call i32 @getppid() #5
@@ -79,7 +79,7 @@ declare i32 @getsid(i32 noundef) #1
 declare i32 @getpid() #1
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local void @Kotoamatsukami_Antidebug3() #0 {
+define dso_local void @KObfucator_Antidebug3() #0 {
   %1 = call ptr @signal(i32 noundef 5, ptr noundef inttoptr (i64 1 to ptr)) #5
   call void asm sideeffect "nop\0A\09int3\0A\09", "~{dirflag},~{fpsr},~{flags}"() #5, !srcloc !6
   %2 = call i32 (ptr, ...) @printf(ptr noundef @.str.1)
@@ -90,7 +90,7 @@ define dso_local void @Kotoamatsukami_Antidebug3() #0 {
 declare ptr @signal(i32 noundef, ptr noundef) #1
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local void @Kotoamatsukami_Antidebug4() #0 {
+define dso_local void @KObfucator_Antidebug4() #0 {
   %1 = alloca ptr, align 8
   %2 = call ptr @getenv(ptr noundef @.str.3) #5
   store ptr %2, ptr %1, align 8
@@ -149,7 +149,7 @@ define dso_local void @alarm_handler(i32 noundef %0) #0 {
 }
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local void @Kotoamatsukami_Antidebug5() #0 {
+define dso_local void @KObfucator_Antidebug5() #0 {
   %1 = call ptr @signal(i32 noundef 14, ptr noundef @alarm_handler) #5
   %2 = call i32 @alarm(i32 noundef 1) #5
   br label %3
@@ -162,7 +162,7 @@ define dso_local void @Kotoamatsukami_Antidebug5() #0 {
 declare i32 @alarm(i32 noundef) #1
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local void @Kotoamatsukami_Antidebug6() #0 {
+define dso_local void @KObfucator_Antidebug6() #0 {
   %1 = call i64 (i32, ...) @ptrace(i32 noundef 0, i32 noundef 0, i32 noundef 0, i32 noundef 0) #5
   %2 = icmp slt i64 %1, 0
   br i1 %2, label %3, label %5
@@ -178,7 +178,7 @@ define dso_local void @Kotoamatsukami_Antidebug6() #0 {
 }
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local void @Kotoamatsukami_Antidebug7() #0 {
+define dso_local void @KObfucator_Antidebug7() #0 {
   %1 = alloca i32, align 4
   %2 = alloca [1024 x i8], align 16
   %3 = alloca [256 x i8], align 16

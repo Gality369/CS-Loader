@@ -5,9 +5,9 @@
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Value.h"
 using namespace llvm;
-namespace Kotoamatsukami {
+namespace KObfucator {
 namespace IndirectCall {
-    void process(Function& F, GlobalVariable* JumpTable, std::map<Function*, Kotoamatsukami::IndirectCallInfo>& indirectCallinfos, ArrayType* AT)
+    void process(Function& F, GlobalVariable* JumpTable, std::map<Function*, KObfucator::IndirectCallInfo>& indirectCallinfos, ArrayType* AT)
     {
         DataLayout Data = F.getParent()->getDataLayout();
         int PtrSize = Data.getTypeAllocSize(Type::getInt8Ty(F.getContext())->getPointerTo());
@@ -38,24 +38,24 @@ namespace IndirectCall {
         }
     }
 }
-} // namespace Kotoamatsukami
+} // namespace KObfucator
 
 PreservedAnalyses IndirectCall::run(Module& M, ModuleAnalysisManager& AM)
 {
-    readConfig("/home/zzzccc/cxzz/Kotoamatsukami/config/config.json");
+    readConfig("/home/zzzccc/cxzz/KObfucator/config/config.json");
     bool is_processed = false;
     DataLayout Data = M.getDataLayout();
     int PtrSize = Data.getTypeAllocSize(Type::getInt8Ty(M.getContext())->getPointerTo());
     Type* PtrValueType = Type::getIntNTy(M.getContext(), PtrSize * 8);
 
     auto gloablName = M.getName().str() + "_FuncJmuptable";
-    std::map<Function*, Kotoamatsukami::IndirectCallInfo> indirectCallinfos;
+    std::map<Function*, KObfucator::IndirectCallInfo> indirectCallinfos;
     int indirectCallinfos_count = 0;
 
     for (llvm::Function& F : M) {
         if (indirectCallinfos.find(&F) == indirectCallinfos.end())
             if (F.hasExactDefinition()) {
-                Kotoamatsukami::IndirectCallInfo newCallInfo;
+                KObfucator::IndirectCallInfo newCallInfo;
                 newCallInfo.index = indirectCallinfos_count++;
                 newCallInfo.key = (int)getRandomNumber();
                 indirectCallinfos[&F] = newCallInfo;
@@ -90,7 +90,7 @@ PreservedAnalyses IndirectCall::run(Module& M, ModuleAnalysisManager& AM)
                     continue;
                 }
             }
-            Kotoamatsukami::IndirectCall::process(F, JumpTable, indirectCallinfos, AT);
+            KObfucator::IndirectCall::process(F, JumpTable, indirectCallinfos, AT);
             is_processed = true;
         }
     }

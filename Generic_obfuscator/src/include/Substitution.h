@@ -1,5 +1,5 @@
-#ifndef LLVM_Kotoamatsukami_Substitution_H
-#define LLVM_Kotoamatsukami_Substitution_H
+#ifndef LLVM_KObfucator_Substitution_H
+#define LLVM_KObfucator_Substitution_H
 // 现在仅适配了AArch64架构 因为不同架构之间汇编不一样
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/CFG.h"
@@ -22,7 +22,7 @@ public:
     static bool isRequired() { return true; }
 };
 }
-namespace Kotoamatsukami {
+namespace KObfucator {
 namespace Substitution {
     void substitute(BinaryOperator* BI);
 

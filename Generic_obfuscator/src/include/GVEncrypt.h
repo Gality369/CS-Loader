@@ -1,5 +1,5 @@
-#ifndef LLVM_Kotoamatsukami_GVEncrypt_H
-#define LLVM_Kotoamatsukami_GVEncrypt_H
+#ifndef LLVM_KObfucator_GVEncrypt_H
+#define LLVM_KObfucator_GVEncrypt_H
 // 现在仅适配了AArch64架构 因为不同架构之间汇编不一样
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/CFG.h"
@@ -23,7 +23,7 @@ public:
     static bool isRequired() { return true; }
 };
 }
-namespace Kotoamatsukami {
+namespace KObfucator {
 namespace GVEncrypt {
     class TaintAnalysis {
     private:
@@ -69,5 +69,5 @@ namespace GVEncrypt {
     bool shouldSkip(GlobalVariable &GV);
     Function *defineDecryptFunction(Module* M, GlobalVariable* GVIsDecrypted);
 } // namespace GVEncrypt
-} // namespace KOtoamatsukami
+} // namespace KObfucator
 #endif

@@ -59,7 +59,7 @@ PreservedAnalyses AddJunkCodePass::run(Module &M, ModuleAnalysisManager &AM)
     int flowerIndex = 0;
     double addJunkCodeProbability = 0.2;
     srand(time(nullptr));
-    readConfig("/home/zzzccc/cxzz/Kotoamatsukami/config/config.json");
+    readConfig("/home/zzzccc/cxzz/KObfucator/config/config.json");
     if (Junkcode.model)
     {
         for (llvm::Function &F : M)

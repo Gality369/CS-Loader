@@ -7,7 +7,7 @@ std::vector<llvm::Function*> defineAntiDebugFunc(llvm::Module *M, LLVMContext &C
     std::vector<llvm::Function*> functions;
     // 可以继续创建更多函数
     for (int i = 1; i <= 7; ++i) {
-        std::string funcName = "Kotoamatsukami_Antidebug" + std::to_string(i);
+        std::string funcName = "KObfucator_Antidebug" + std::to_string(i);
         FunctionType *FT = FunctionType::get(Type::getVoidTy(Context), false);
         Function *F = Function::Create(FT, Function::ExternalLinkage, funcName, M);
         functions.push_back(F);
@@ -50,7 +50,7 @@ void insertConstructorFunctions(llvm::Module &module, std::vector<llvm::Function
 PreservedAnalyses AntiDebugPass::run(Module &M, ModuleAnalysisManager &AM)
 {
     bool isChanged = false;
-    readConfig("/home/zzzccc/cxzz/Kotoamatsukami/config/config.json");
+    readConfig("/home/zzzccc/cxzz/KObfucator/config/config.json");
     if (Antidebug.model)
     {
             std::vector<llvm::Function*> antiDebugFuncs = defineAntiDebugFunc(&M, M.getContext());

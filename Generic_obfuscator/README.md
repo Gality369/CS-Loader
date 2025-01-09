@@ -1,10 +1,10 @@
-# Kotoamatsukami
+# KObfucator
 
-Kotoamatsukami is an obfuscator based on LLVM-17, utilizing LLVM's new pass to implement plug-in features, for obfuscating multiple languages and platforms.
+KObfucator is an obfuscator based on LLVM-17, utilizing LLVM's new pass to implement plug-in features, for obfuscating multiple languages and platforms.
 
-The name "Kotoamatsukami" is derived from my favorite anime, **Naruto**, which features the best genjutsu in my heart.
+The name "KObfucator" is derived from my favorite anime, **Naruto**, which features the best genjutsu in my heart.
 
-I will provide a complete set of related documentation in the future,now you can find the dynamically link files-Kotoamatsukami.so in /bin/build,and the /bin/test contains the different files obsfucated by different methods.
+I will provide a complete set of related documentation in the future,now you can find the dynamically link files-KObfucator.so in /bin/build,and the /bin/test contains the different files obsfucated by different methods.
 
 PS:This project is written by myself out of interest, it may not be complete, if you have any questions about this project, please feel free to contact me.
 
@@ -141,7 +141,7 @@ ninja install
 These commands will install compiled products to <your-llvmdir>/build,then your need modify the CMakeLists.txt of this project.
 
 ```
-cd Kotoamatsukami
+cd KObfucator
 mkdir build
 cd build
 cmake ..
@@ -152,7 +152,7 @@ make -j
 
 ### How to use
 
-You need set the configuration file in `/tmp/Kotoamatsukami/Kotoamatsukami.config`,which format is as follows.
+You need set the configuration file in `/tmp/KObfucator/KObfucator.config`,which format is as follows.
 
 **`0`**: All functions are turned off (everything is disabled).
 
@@ -162,13 +162,13 @@ You need set the configuration file in `/tmp/Kotoamatsukami/Kotoamatsukami.confi
 
 **`3`**: Enable all functions except those that are explicitly disabled (enable all functions that are not disabled).
 
-Then you can use the Kotoamatsukami.so as follows:
+Then you can use the KObfucator.so as follows:
 
 ```shell
-<your-clang-17> -fpass-plugin=<your-Kotoamatsukami_so>
+<your-clang-17> -fpass-plugin=<your-KObfucator_so>
 ```
 
-`Kotoamatsukami.config`
+`KObfucator.config`
 
 ```json
 {
@@ -414,7 +414,7 @@ Then you can use the Kotoamatsukami.so as follows:
             511,
             512
         ],
-        "module_name": "/home/zzzccc/cxzz/Kotoamatsukami/config/quick_pow.ll"
+        "module_name": "/home/zzzccc/cxzz/KObfucator/config/quick_pow.ll"
     },
     "ForObs": {
         "model": 0,

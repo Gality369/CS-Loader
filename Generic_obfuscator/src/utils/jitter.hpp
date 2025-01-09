@@ -20,7 +20,7 @@ class ObjectFile;
 }
 }
 
-namespace Kotoamatsukami {
+namespace KObfucator {
 class Jitter {
 public:
   Jitter(const std::string &Triple);

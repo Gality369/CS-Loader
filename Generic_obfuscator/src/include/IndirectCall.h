@@ -1,5 +1,5 @@
-#ifndef LLVM_Kotoamatsukami_IndirectCall_H
-#define LLVM_Kotoamatsukami_IndirectCall_H
+#ifndef LLVM_KObfucator_IndirectCall_H
+#define LLVM_KObfucator_IndirectCall_H
 //现在仅适配了AArch64架构 因为不同架构之间汇编不一样
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/CFG.h"
@@ -19,12 +19,12 @@ namespace llvm
     static bool isRequired() { return true; }
   };
 }
-namespace Kotoamatsukami
+namespace KObfucator
 {
   struct IndirectCallInfo {
   int index;
   int key;
 };
-} // namespace Kotoamatsukami
+} // namespace KObfucator
 
 #endif

@@ -73,7 +73,7 @@ void SplitBasicBlock::split(Function *F, int splitNumber) {
 }
 
 PreservedAnalyses SplitBasicBlock::run(Module &M, ModuleAnalysisManager &AM) {
-    readConfig("/home/zzzccc/cxzz/Kotoamatsukami/config/config.json");
+    readConfig("/home/zzzccc/cxzz/KObfucator/config/config.json");
     
     if (SplitBasicBlocks.model){
         for (llvm::Function &F : M) {

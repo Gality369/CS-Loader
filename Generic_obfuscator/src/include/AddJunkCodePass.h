@@ -1,5 +1,5 @@
-#ifndef LLVM_Kotoamatsukami_AddJunkCodePass_H
-#define LLVM_Kotoamatsukami_AddJunkCodePass_H
+#ifndef LLVM_KObfucator_AddJunkCodePass_H
+#define LLVM_KObfucator_AddJunkCodePass_H
 
 #include "llvm/IR/PassManager.h"
 

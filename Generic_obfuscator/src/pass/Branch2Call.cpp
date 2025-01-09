@@ -363,7 +363,7 @@ PreservedAnalyses Branch2Call::run(llvm::Module& M,
     ModuleAnalysisManager& AM)
 {
     LLVMContext& Ctx = M.getContext();
-    readConfig("/home/zzzccc/cxzz/Kotoamatsukami/config/config.json");
+    readConfig("/home/zzzccc/cxzz/KObfucator/config/config.json");
     if (branch2call.model) {
         for (llvm::Function& F : M) {
             if (getBasicBlockCountIfNotSkipped(F) != -1) {

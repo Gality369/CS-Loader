@@ -1,5 +1,5 @@
-#ifndef LLVM_Kotoamatsukami_Branch2Call_32_H
-#define LLVM_Kotoamatsukami_Branch2Call_32_H
+#ifndef LLVM_KObfucator_Branch2Call_32_H
+#define LLVM_KObfucator_Branch2Call_32_H
 //现在仅适配了AArch64架构 因为不同架构之间汇编不一样
 #include "llvm/IR/PassManager.h"
 #include "llvm/ADT/Statistic.h"

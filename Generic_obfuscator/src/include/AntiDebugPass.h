@@ -1,5 +1,5 @@
-#ifndef LLVM_Kotoamatsukami_AntiDebugPass_H
-#define LLVM_Kotoamatsukami_AntiDebugPass_H
+#ifndef LLVM_KObfucator_AntiDebugPass_H
+#define LLVM_KObfucator_AntiDebugPass_H
 
 #include "llvm/IR/PassManager.h"
 #include "llvm/ADT/Statistic.h"

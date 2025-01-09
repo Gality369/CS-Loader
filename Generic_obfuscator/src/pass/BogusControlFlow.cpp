@@ -12,7 +12,7 @@
 #include "llvm/IR/Value.h"
 #include <istream>
 using namespace llvm;
-namespace Kotoamatsukami {
+namespace KObfucator {
 // 魔改思路 将每个被魔改的都改成一个类似while循环 当flag为0 时才能跳出循环 然后每次都让 x + 1 不用 y 了
 namespace BogusControlFlow {
     // 含有相关指令的clone block 不能被运行 这里可能不一定完备
@@ -90,10 +90,10 @@ namespace BogusControlFlow {
         return nullptr;
     }
 }
-} // namespace Kotoamatsukami
+} // namespace KObfucator
 PreservedAnalyses BogusControlFlow::run(Module& M, ModuleAnalysisManager& AM)
 {
-    readConfig("/home/zzzccc/cxzz/Kotoamatsukami/config/config.json");
+    readConfig("/home/zzzccc/cxzz/KObfucator/config/config.json");
     bool is_processed = false;
     if (bogus_control_flow.model) {
         for (llvm::Function& F : M) {
@@ -112,7 +112,7 @@ PreservedAnalyses BogusControlFlow::run(Module& M, ModuleAnalysisManager& AM)
             // 申请一个局部变量 用来保证real block 确实会被运行
             BasicBlock& entryBB = F.getEntryBlock();
             IRBuilder<> builder(F.getContext());
-            builder.SetInsertPoint(Kotoamatsukami::BogusControlFlow::getFirstAllocaOrLastInstruction(entryBB));
+            builder.SetInsertPoint(KObfucator::BogusControlFlow::getFirstAllocaOrLastInstruction(entryBB));
             Value* flag_ptr = builder.CreateAlloca(Type::getInt1Ty(F.getContext()));
             builder.CreateStore(ConstantInt::get(Type::getInt1Ty(F.getContext()), 0), flag_ptr);
 
@@ -136,13 +136,13 @@ PreservedAnalyses BogusControlFlow::run(Module& M, ModuleAnalysisManager& AM)
                 cloneBB->getTerminator()->eraseFromParent();
 
                 if ((getRandomNumber() % 100) <= 50) {
-                    Value* cond1 = Kotoamatsukami::BogusControlFlow::createBogusCmp(headBB);
+                    Value* cond1 = KObfucator::BogusControlFlow::createBogusCmp(headBB);
                     BranchInst::Create(bodyBB, cloneBB, cond1, headBB);
                     BranchInst::Create(tailBB, cloneBB, cond1, bodyBB);
                     BranchInst::Create(bodyBB, cloneBB);
                 } else {
-                    Value* cond1 = Kotoamatsukami::BogusControlFlow::createMayRunBogusCmp(headBB);
-                    BasicBlock* jump2BodyBB = Kotoamatsukami::BogusControlFlow::createJump2BodyBB(&F, flag_ptr, bodyBB, tailBB);
+                    Value* cond1 = KObfucator::BogusControlFlow::createMayRunBogusCmp(headBB);
+                    BasicBlock* jump2BodyBB = KObfucator::BogusControlFlow::createJump2BodyBB(&F, flag_ptr, bodyBB, tailBB);
                     BranchInst::Create(cloneBB, bodyBB, cond1, headBB);
                     BranchInst::Create(jump2BodyBB, bodyBB);
                     BranchInst::Create(jump2BodyBB, cloneBB);

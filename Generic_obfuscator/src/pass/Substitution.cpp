@@ -16,7 +16,7 @@ using std::vector;
 
 // 混淆次数，混淆次数越多混淆结果越复杂
 int sub_times = 3;
-namespace Kotoamatsukami {
+namespace KObfucator {
 namespace Substitution {
 
     void substitute(BinaryOperator* BI)
@@ -288,7 +288,7 @@ public:
 
 PreservedAnalyses llvm::Substitution::run(Module& M, ModuleAnalysisManager& AM)
 {
-    readConfig("/home/zzzccc/cxzz/Kotoamatsukami/config/config.json");
+    readConfig("/home/zzzccc/cxzz/KObfucator/config/config.json");
     bool is_processed = false;
     if (substitution.model) {
         for (llvm::Function& F : M) {
@@ -313,7 +313,7 @@ PreservedAnalyses llvm::Substitution::run(Module& M, ModuleAnalysisManager& AM)
                     for (Instruction* I : origInst) {
                         if (isa<BinaryOperator>(I)) {
                             BinaryOperator* BI = cast<BinaryOperator>(I);
-                            Kotoamatsukami::Substitution::substitute(BI);
+                            KObfucator::Substitution::substitute(BI);
                         }
                     }
                 }

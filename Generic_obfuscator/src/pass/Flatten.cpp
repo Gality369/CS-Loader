@@ -8,7 +8,7 @@
 #include "llvm/IR/Type.h"
 using namespace llvm;
 using std::vector;
-namespace Kotoamatsukami {
+namespace KObfucator {
 namespace Flatten {
     bool flatten(Function& F)
     {
@@ -87,7 +87,7 @@ namespace Flatten {
 
 PreservedAnalyses Flatten::run(Module& M, ModuleAnalysisManager& AM)
 {
-    readConfig("/home/zzzccc/cxzz/Kotoamatsukami/config/config.json");
+    readConfig("/home/zzzccc/cxzz/KObfucator/config/config.json");
     bool is_processed = false;
     if (flatten.model) {
         for (llvm::Function& F : M) {
@@ -103,7 +103,7 @@ PreservedAnalyses Flatten::run(Module& M, ModuleAnalysisManager& AM)
             if (!F.hasExactDefinition()) {
                 continue;
             }
-            Kotoamatsukami::Flatten::flatten(F);
+            KObfucator::Flatten::flatten(F);
             is_processed = true;
         }
     }

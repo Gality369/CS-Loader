@@ -1,5 +1,5 @@
-#ifndef LLVM_Kotoamatsukami_TaintAnalysis_H
-#define LLVM_Kotoamatsukami_TaintAnalysis_H
+#ifndef LLVM_KObfucator_TaintAnalysis_H
+#define LLVM_KObfucator_TaintAnalysis_H
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/Function.h"
@@ -11,7 +11,7 @@
 #include <vector>
 using namespace llvm;
 using namespace std;
-namespace Kotoamatsukami {
+namespace KObfucator {
 
 class TaintAnalysis {
 private:
@@ -43,5 +43,5 @@ public:
     void printUnnecessarySet() const;
 
 }; // Class TainAnalysis end
-} // namespace KOtoamatsukami
+} // namespace KObfucator
 #endif

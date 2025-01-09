@@ -1,5 +1,5 @@
-#ifndef LLVM_Kotoamatsukami_Loopen_H
-#define LLVM_Kotoamatsukami_Loopen_H
+#ifndef LLVM_KObfucator_Loopen_H
+#define LLVM_KObfucator_Loopen_H
 
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/BasicBlock.h"

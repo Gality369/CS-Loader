@@ -356,7 +356,7 @@ PreservedAnalyses Branch2Call_32::run(llvm::Module& M,
     //   int PtrSize =
     //       Data.getTypeAllocSize(Type::getInt8Ty(F.getContext())->getPointerTo());
     //   Type *PtrValueType = Type::getIntNTy(F.getContext(), PtrSize * 8);
-    readConfig("/home/zzzccc/cxzz/Kotoamatsukami/config/config.json");
+    readConfig("/home/zzzccc/cxzz/KObfucator/config/config.json");
     if (branch2call_32.model) {
         for (llvm::Function& F : M) {
             if (getBasicBlockCountIfNotSkipped(F) != -1) {

@@ -15,10 +15,10 @@
 #include "GVEncrypt.h"
 using namespace llvm;
 
-llvm::PassPluginLibraryInfo getKotoamatsukamiPluginInfo()
+llvm::PassPluginLibraryInfo getKObfucatorPluginInfo()
 {
   return {
-      LLVM_PLUGIN_API_VERSION, "Kotoamatsukami", LLVM_VERSION_STRING,
+      LLVM_PLUGIN_API_VERSION, "KObfucator", LLVM_VERSION_STRING,
       [](PassBuilder &PB)
       {
         // 注册你的 Pass 并将其添加到函数 Pass 管理器中
@@ -109,5 +109,5 @@ llvm::PassPluginLibraryInfo getKotoamatsukamiPluginInfo()
 __attribute__((visibility("default"))) extern "C" LLVM_ATTRIBUTE_WEAK ::llvm::PassPluginLibraryInfo
 llvmGetPassPluginInfo()
 {
-  return getKotoamatsukamiPluginInfo();
+  return getKObfucatorPluginInfo();
 }

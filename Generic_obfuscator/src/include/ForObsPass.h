@@ -1,5 +1,5 @@
-#ifndef LLVM_Kotoamatsukami_ForObsPass_H
-#define LLVM_Kotoamatsukami_ForObsPass_H
+#ifndef LLVM_KObfucator_ForObsPass_H
+#define LLVM_KObfucator_ForObsPass_H
 
 #include "llvm/IR/PassManager.h"
 

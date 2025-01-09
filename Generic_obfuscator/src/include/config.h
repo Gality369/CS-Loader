@@ -1,5 +1,5 @@
-#ifndef Kotoamatsukami_CONFIG_H
-#define Kotoamatsukami_CONFIG_H
+#ifndef KObfucator_CONFIG_H
+#define KObfucator_CONFIG_H
 
 #include <iostream>
 #include <fstream>

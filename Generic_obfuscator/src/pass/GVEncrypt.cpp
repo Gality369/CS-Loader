@@ -23,9 +23,9 @@
 #include <vector>
 std::set<llvm::GlobalVariable*> needEncGV;
 int needEncGV_count = 0;
-std::map<llvm::GlobalVariable*, Kotoamatsukami::GVEncrypt::GVInfo> needEncGVInfos;
+std::map<llvm::GlobalVariable*, KObfucator::GVEncrypt::GVInfo> needEncGVInfos;
 std::set<llvm::GlobalVariable*> GVUsedByFunc;
-bool Kotoamatsukami::GVEncrypt::shouldSkip(GlobalVariable& GV)
+bool KObfucator::GVEncrypt::shouldSkip(GlobalVariable& GV)
 {
     if (GV.getName().startswith("llvm.")) {
         return true;
@@ -47,7 +47,7 @@ bool Kotoamatsukami::GVEncrypt::shouldSkip(GlobalVariable& GV)
     return false;
 }
 
-Function* Kotoamatsukami::GVEncrypt::defineDecryptFunction(Module* M, GlobalVariable* GVIsDecrypted)
+Function* KObfucator::GVEncrypt::defineDecryptFunction(Module* M, GlobalVariable* GVIsDecrypted)
 {
     std::vector<Type*> Params;
     Params.push_back(Type::getInt32Ty(M->getContext())); // index
@@ -55,7 +55,7 @@ Function* Kotoamatsukami::GVEncrypt::defineDecryptFunction(Module* M, GlobalVari
     Params.push_back(Type::getInt32Ty(M->getContext())); // len
     Params.push_back(Type::getInt8Ty(M->getContext())->getPointerTo()); // GV
     FunctionType* FT = FunctionType::get(Type::getVoidTy(M->getContext()), Params, false);
-    Function* F = Function::Create(FT, GlobalValue::PrivateLinkage, "_Kotoamatsukami_decryptGV", M);
+    Function* F = Function::Create(FT, GlobalValue::PrivateLinkage, "_KObfucator_decryptGV", M);
     BasicBlock* entryBB = BasicBlock::Create(M->getContext(), "entry", F);
     BasicBlock* bodyBB = BasicBlock::Create(M->getContext(), "body", F);
     BasicBlock* endBB = BasicBlock::Create(M->getContext(), "end", F);
@@ -108,7 +108,7 @@ Function* Kotoamatsukami::GVEncrypt::defineDecryptFunction(Module* M, GlobalVari
     return F;
 }
 
-bool Kotoamatsukami::GVEncrypt::encryptGV(llvm::Function* F,  Function* decryptFunction)
+bool KObfucator::GVEncrypt::encryptGV(llvm::Function* F,  Function* decryptFunction)
 {
 
     for (auto& BB : *F) {
@@ -152,15 +152,15 @@ static void encryptGvData(uint8_t* data, uint8_t key, int32_t len)
 }
 PreservedAnalyses GVEncrypt::run(Module& M, ModuleAnalysisManager& AM)
 {
-    readConfig("/home/zzzccc/cxzz/Kotoamatsukami/config/config.json");
+    readConfig("/home/zzzccc/cxzz/KObfucator/config/config.json");
     bool is_processed = false;
     const DataLayout& DL = M.getDataLayout();
     if (gv_encrypt.model) {
         for (auto& GV : M.globals()) {
-            if (!Kotoamatsukami::GVEncrypt::shouldSkip(GV) && needEncGV.find(&GV) == needEncGV.end()) {
+            if (!KObfucator::GVEncrypt::shouldSkip(GV) && needEncGV.find(&GV) == needEncGV.end()) {
                 needEncGV.insert(&GV);
                 uint32_t size = DL.getTypeAllocSize(GV.getValueType());
-                Kotoamatsukami::GVEncrypt::GVInfo new_gv_info;
+                KObfucator::GVEncrypt::GVInfo new_gv_info;
                 new_gv_info.index = needEncGV_count++;
                 new_gv_info.key = (uint8_t)getRandomNumber();
                 new_gv_info.len = size;
@@ -200,10 +200,10 @@ PreservedAnalyses GVEncrypt::run(Module& M, ModuleAnalysisManager& AM)
             GVIsDecrypted->setLinkage(GlobalValue::PrivateLinkage);
         }
 
-        Function* decryptFunction = Kotoamatsukami::GVEncrypt::defineDecryptFunction(&M, GVIsDecrypted);
+        Function* decryptFunction = KObfucator::GVEncrypt::defineDecryptFunction(&M, GVIsDecrypted);
         for (llvm::Function& F : M) {
             llvm::outs() << F.getName().str() << "\n";
-            if (F.getName().str().find("Kotoamatsukami") != std::string::npos) {
+            if (F.getName().str().find("KObfucator") != std::string::npos) {
                 continue;
             }
             
@@ -219,7 +219,7 @@ PreservedAnalyses GVEncrypt::run(Module& M, ModuleAnalysisManager& AM)
             if (!F.hasExactDefinition()) {
                 continue;
             }
-            Kotoamatsukami::GVEncrypt::encryptGV(&F, decryptFunction);
+            KObfucator::GVEncrypt::encryptGV(&F, decryptFunction);
             is_processed = true;
         }
     }
