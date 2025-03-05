@@ -28,6 +28,7 @@ These commands will install compiled products to <your-llvmdir>/build,then your 
 
 ```
 cd Generic_obfuscator
+git submodule update --init --recursive
 mkdir build
 cd build
 cmake ..
