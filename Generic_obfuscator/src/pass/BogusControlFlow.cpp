@@ -10,9 +10,11 @@
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
+#include "llvm/Support/raw_ostream.h"
+#include "Log.hpp"
 #include <istream>
 using namespace llvm;
-namespace KObfucator {
+namespace Generic_obfuscator {
 // 魔改思路 将每个被魔改的都改成一个类似while循环 当flag为0 时才能跳出循环 然后每次都让 x + 1 不用 y 了
 namespace BogusControlFlow {
     // 含有相关指令的clone block 不能被运行 这里可能不一定完备
@@ -25,6 +27,8 @@ namespace BogusControlFlow {
         }
         return false;
     }
+    // Cond will increase by 1 every time, but in the program it will definitely not be able to run until Cond is large enough, so the possible conditions still cannot be established.
+    // [Improve me]! I think just doing this is of little use
     Value* createMayRunBogusCmp(BasicBlock* insertAfter)
     {
         // if(( x * (x + 1) % 72 == 0))
@@ -34,7 +38,7 @@ namespace BogusControlFlow {
         if (!xptr->hasInitializer()) {
             xptr->setInitializer(ConstantInt::get(Type::getInt32Ty(context),2)); // 初始值为 0
         }
-        xptr->setLinkage(GlobalValue::CommonLinkage);
+        xptr->setLinkage(GlobalValue::PrivateLinkage);
         IRBuilder<> builder(context);
         builder.SetInsertPoint(insertAfter);
         LoadInst* x = builder.CreateLoad(Type::getInt32Ty(context), xptr);
@@ -90,29 +94,20 @@ namespace BogusControlFlow {
         return nullptr;
     }
 }
-} // namespace KObfucator
+} // namespace Generic_obfuscator
 PreservedAnalyses BogusControlFlow::run(Module& M, ModuleAnalysisManager& AM)
 {
-    readConfig("/home/zzzccc/cxzz/KObfucator/config/config.json");
+    readConfig("/home/zzzccc/cxzz/Generic_obfuscator/config/config.json");
     bool is_processed = false;
-    if (bogus_control_flow.model) {
+    if (bogusControlFlow.model) {
         for (llvm::Function& F : M) {
-            if (bogus_control_flow.model == 2) {
-                if (std::find(bogus_control_flow.enable_function.begin(), bogus_control_flow.enable_function.end(), F.getName()) == bogus_control_flow.enable_function.end()) {
-                    continue;
-                }
-            } else if (bogus_control_flow.model == 3) {
-                if (std::find(bogus_control_flow.disable_function.begin(), bogus_control_flow.disable_function.end(), F.getName()) != bogus_control_flow.disable_function.end()) {
-                    continue;
-                }
-            }
-            if (!F.hasExactDefinition()) {
+            if (shouldSkip(F, bogusControlFlow)) {
                 continue;
             }
             // 申请一个局部变量 用来保证real block 确实会被运行
             BasicBlock& entryBB = F.getEntryBlock();
             IRBuilder<> builder(F.getContext());
-            builder.SetInsertPoint(KObfucator::BogusControlFlow::getFirstAllocaOrLastInstruction(entryBB));
+            builder.SetInsertPoint(Generic_obfuscator::BogusControlFlow::getFirstAllocaOrLastInstruction(entryBB));
             Value* flag_ptr = builder.CreateAlloca(Type::getInt1Ty(F.getContext()));
             builder.CreateStore(ConstantInt::get(Type::getInt1Ty(F.getContext()), 0), flag_ptr);
 
@@ -136,13 +131,13 @@ PreservedAnalyses BogusControlFlow::run(Module& M, ModuleAnalysisManager& AM)
                 cloneBB->getTerminator()->eraseFromParent();
 
                 if ((getRandomNumber() % 100) <= 50) {
-                    Value* cond1 = KObfucator::BogusControlFlow::createBogusCmp(headBB);
+                    Value* cond1 = Generic_obfuscator::BogusControlFlow::createBogusCmp(headBB);
                     BranchInst::Create(bodyBB, cloneBB, cond1, headBB);
                     BranchInst::Create(tailBB, cloneBB, cond1, bodyBB);
                     BranchInst::Create(bodyBB, cloneBB);
                 } else {
-                    Value* cond1 = KObfucator::BogusControlFlow::createMayRunBogusCmp(headBB);
-                    BasicBlock* jump2BodyBB = KObfucator::BogusControlFlow::createJump2BodyBB(&F, flag_ptr, bodyBB, tailBB);
+                    Value* cond1 = Generic_obfuscator::BogusControlFlow::createMayRunBogusCmp(headBB);
+                    BasicBlock* jump2BodyBB = Generic_obfuscator::BogusControlFlow::createJump2BodyBB(&F, flag_ptr, bodyBB, tailBB);
                     BranchInst::Create(cloneBB, bodyBB, cond1, headBB);
                     BranchInst::Create(jump2BodyBB, bodyBB);
                     BranchInst::Create(jump2BodyBB, cloneBB);
@@ -154,7 +149,9 @@ PreservedAnalyses BogusControlFlow::run(Module& M, ModuleAnalysisManager& AM)
             }
             demoteRegisters(&F);
             is_processed = true;
+            PrintSuccess("BogusControlFlow successfully process func ", F.getName().str());
         }
+        // M.print(llvm::outs(),nullptr);
     }
     if (is_processed) {
         return PreservedAnalyses::none();

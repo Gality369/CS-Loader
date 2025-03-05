@@ -1,5 +1,5 @@
-#ifndef LLVM_KObfucator_BogusControlFlow_H
-#define LLVM_KObfucator_BogusControlFlow_H
+#ifndef LLVM_Generic_obfuscator_BogusControlFlow_H
+#define LLVM_Generic_obfuscator_BogusControlFlow_H
 //现在仅适配了AArch64架构 因为不同架构之间汇编不一样
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/CFG.h"

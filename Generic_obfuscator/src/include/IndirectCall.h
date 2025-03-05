@@ -1,5 +1,5 @@
-#ifndef LLVM_KObfucator_IndirectCall_H
-#define LLVM_KObfucator_IndirectCall_H
+#ifndef LLVM_Generic_obfuscator_IndirectCall_H
+#define LLVM_Generic_obfuscator_IndirectCall_H
 //现在仅适配了AArch64架构 因为不同架构之间汇编不一样
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/CFG.h"
@@ -19,12 +19,12 @@ namespace llvm
     static bool isRequired() { return true; }
   };
 }
-namespace KObfucator
+namespace Generic_obfuscator
 {
   struct IndirectCallInfo {
   int index;
   int key;
 };
-} // namespace KObfucator
+} // namespace Generic_obfuscator
 
 #endif

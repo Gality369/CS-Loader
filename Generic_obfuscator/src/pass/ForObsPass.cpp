@@ -7,58 +7,71 @@
 #include "llvm/IR/Function.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "../include/ForObsPass.h"
+#include "Log.hpp"
 #include "config.h"
 #include <cstdlib> // 用于随机数生成
 #include <set>     // 用于跟踪已处理的基本块
+#include <random>
 
 using namespace llvm;
-std::set<BasicBlock *> forpass_processedBlocks; // 用于跟踪已处理的基本块
+std::set<BasicBlock *> forobsProcessedBlocks; // 用于跟踪已处理的基本块
 std::set<BasicBlock *> generatedBlocks;         // 用于跟踪已生成循环的基本块
 
-// 在指定的基本块中插入二重循环的函数
-void insertNestedLoop(IRBuilder<> &builder, LLVMContext &context, Function &F,
-                      Value *N, Value *M, IntegerType *intType, BasicBlock *OldBB, BasicBlock *NewBB,BasicBlock *NewNewBB,  int k)
+// Insert a multiple loop between 2 basic block
+void insertMultipleLoop(IRBuilder<> &builder, LLVMContext &context, Function &F,
+                        Value *N, Value *M, BasicBlock *OldBB, BasicBlock *NewBB, int k)
 {
-    BasicBlock *TmpLoopCond = nullptr;
-    BasicBlock *TmpLoopBody = nullptr;
-    BasicBlock *TmpLoopEnd = nullptr;
+    // 生成一个随机后缀，避免名称冲突
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    static std::uniform_int_distribution<> dis(0, 99999999);
+    int randomSuffix = dis(gen);  // 生成一个 1000-9999 的随机数
 
-    // 创建循环初始值
-    Value *outerLoopVar = builder.CreateAlloca(intType, nullptr, "i");
+    BasicBlock *tmpLoopCond = nullptr;
+    BasicBlock *tmpLoopBody = nullptr;
+    BasicBlock *tmpLoopEnd = nullptr;
+    IntegerType *intType = Type::getInt32Ty(context);
+
+    // 添加随机后缀到变量名
+    std::string outerLoopVarName = "i_" + std::to_string(randomSuffix);
+    Value *outerLoopVar = builder.CreateAlloca(intType, nullptr, outerLoopVarName);
     builder.CreateStore(ConstantInt::get(intType, 0), outerLoopVar);
+
     std::vector<Value *> innerLoopVarVec;
     for (int i = 0; i < k; i++)
     {
-        std::string tmpName = "innerLoopVar_" + std::to_string(i);
+        std::string tmpName = "innerLoopVar_" + std::to_string(i) + "_" + std::to_string(randomSuffix);
         Value *tmpVar = builder.CreateAlloca(intType, nullptr, tmpName);
         builder.CreateStore(ConstantInt::get(intType, 0), tmpVar);
         innerLoopVarVec.push_back(tmpVar);
     }
-    Value *isExcutedVal = builder.CreateAlloca(intType, nullptr, "is_excuted");
+
+    std::string loopExitCondValName = "loopExitCondVal_" + std::to_string(randomSuffix);
+    Value *loopExitCondVal = builder.CreateAlloca(intType, nullptr, loopExitCondValName);
+    builder.CreateStore(ConstantInt::get(intType, 0), loopExitCondVal);  // 修复：初始化 loopExitCondVal 而非未定义的 isExcutedVal
     builder.CreateStore(ConstantInt::get(intType, 0), outerLoopVar);
 
-    // 创建中介基本块 关联循环与原基本块
-    BasicBlock *excuteCond = BasicBlock::Create(context, "excute.cond", &F);
-    builder.SetInsertPoint(excuteCond);
-    generatedBlocks.insert(excuteCond);
-    Value *isExcuteLoad = builder.CreateLoad(intType, isExcutedVal);
-    Value *isExcuteNext = builder.CreateAdd(isExcuteLoad, ConstantInt::get(intType, 1));
-    builder.CreateStore(isExcuteNext, isExcutedVal);
+    // 创建中介基本块，添加随机后缀
+    std::string loopExitCondName = "executeCond_" + std::to_string(randomSuffix);
+    BasicBlock *loopExitCond = BasicBlock::Create(context, loopExitCondName, &F);
+    builder.SetInsertPoint(loopExitCond);
+    generatedBlocks.insert(loopExitCond);
+    Value *loopExitCondValLoad = builder.CreateLoad(intType, loopExitCondVal);
+    Value *loopExitCondValNext = builder.CreateAdd(loopExitCondValLoad, ConstantInt::get(intType, 1));
+    builder.CreateStore(loopExitCondValNext, loopExitCondVal);
 
-    // builder.CreateCondBr(isExcuteCond, innerLoopBody, innerLoopEnd);
-
-    // 创建外循环基本块
-    BasicBlock *outerLoopCond = BasicBlock::Create(context, "outer.loop.cond", &F);
+    // 创建外循环基本块，添加随机后缀
+    std::string outerLoopCondName = "outerLoopCond_" + std::to_string(randomSuffix);
+    BasicBlock *outerLoopCond = BasicBlock::Create(context, outerLoopCondName, &F);
     generatedBlocks.insert(outerLoopCond);
-    BasicBlock *outerLoopBody = BasicBlock::Create(context, "outer.loop.body", &F);
+    std::string outerLoopBodyName = "outerLoopBody_" + std::to_string(randomSuffix);
+    BasicBlock *outerLoopBody = BasicBlock::Create(context, outerLoopBodyName, &F);
     generatedBlocks.insert(outerLoopBody);
-    BasicBlock *outerLoopEnd = BasicBlock::Create(context, "outer.loop.end", &F);
+    std::string outerLoopEndName = "outerLoopEnd_" + std::to_string(randomSuffix);
+    BasicBlock *outerLoopEnd = BasicBlock::Create(context, outerLoopEndName, &F);
     generatedBlocks.insert(outerLoopEnd);
     Instruction *newBr = BranchInst::Create(outerLoopCond);
-
-    // 使用 ReplaceInstWithInst 将旧的终止指令替换为新的跳转指令
     ReplaceInstWithInst(OldBB->getTerminator(), newBr);
-    // F.getParent()->print(llvm::outs(), nullptr);
     builder.SetInsertPoint(outerLoopCond);
 
     // 外循环条件判断
@@ -70,150 +83,141 @@ void insertNestedLoop(IRBuilder<> &builder, LLVMContext &context, Function &F,
     Value *outerNext = builder.CreateAdd(outerLoad, ConstantInt::get(intType, 1));
     builder.CreateStore(outerNext, outerLoopVar);
     builder.SetInsertPoint(outerLoopEnd);
-    builder.CreateBr(NewBB); 
+    builder.CreateBr(NewBB);
 
-    // F.getParent()->print(llvm::outs(), nullptr);
-    TmpLoopCond = outerLoopCond;
-    TmpLoopBody = outerLoopBody;
-    TmpLoopEnd = outerLoopEnd;
-    // F.print(llvm::errs(), nullptr);
+    tmpLoopCond = outerLoopCond;
+    tmpLoopBody = outerLoopBody;
+    tmpLoopEnd = outerLoopEnd;
 
     for (int i = 0; i < k; i++)
     {
-        // 插入外循环体
-        builder.SetInsertPoint(TmpLoopBody);
-
-        // 创建内循环初始值
+        builder.SetInsertPoint(tmpLoopBody);
         Value *innerLoopVar = innerLoopVarVec[i];
-        
-        // 创建内循环基本块
-        BasicBlock *innerLoopCond = BasicBlock::Create(context, "inner.loop.cond", &F);
+
+        // 创建内循环基本块，添加随机后缀
+        std::string innerLoopCondName = "innerLoopCond_" + std::to_string(i) + "_" + std::to_string(randomSuffix);
+        BasicBlock *innerLoopCond = BasicBlock::Create(context, innerLoopCondName, &F);
         generatedBlocks.insert(innerLoopCond);
-        BasicBlock *innerLoopBody = BasicBlock::Create(context, "inner.loop.body", &F);
+        std::string innerLoopBodyName = "innerLoopBody_" + std::to_string(i) + "_" + std::to_string(randomSuffix);
+        BasicBlock *innerLoopBody = BasicBlock::Create(context, innerLoopBodyName, &F);
         generatedBlocks.insert(innerLoopBody);
-        BasicBlock *innerLoopEnd = BasicBlock::Create(context, "inner.loop.end", &F);
+        std::string innerLoopEndName = "innerLoopEnd_" + std::to_string(i) + "_" + std::to_string(randomSuffix);
+        BasicBlock *innerLoopEnd = BasicBlock::Create(context, innerLoopEndName, &F);
         generatedBlocks.insert(innerLoopEnd);
 
-        builder.CreateBr(innerLoopCond); // 跳转到内循环条件检查块
+        builder.CreateBr(innerLoopCond);
         builder.SetInsertPoint(innerLoopCond);
-        
-        // 内循环条件判断
+
         Value *innerLoad = builder.CreateLoad(intType, innerLoopVar);
         Value *innerCond = builder.CreateICmpSLT(innerLoad, M);
         builder.CreateCondBr(innerCond, innerLoopBody, innerLoopEnd);
-        
-        // 插入内循环体
-        builder.SetInsertPoint(innerLoopBody);
-        // 这里可以插入内循环体的指令
 
-        // 内循环结束，递增内循环变量
+        builder.SetInsertPoint(innerLoopBody);
         Value *innerNext = builder.CreateAdd(innerLoad, ConstantInt::get(intType, 1));
         builder.CreateStore(innerNext, innerLoopVar);
+
         if (i == (k - 1))
         {
-            Value *isExcuteLoad = builder.CreateLoad(intType, isExcutedVal);
-            Value *isExcuteCond = builder.CreateICmpSGT(isExcuteLoad, ConstantInt::get(intType, 0));
-            builder.CreateCondBr(isExcuteCond, innerLoopCond, excuteCond);
-            builder.SetInsertPoint(excuteCond);
+            Value *tmpLoad = builder.CreateLoad(intType, loopExitCondVal);
+            Value *tmpCond = builder.CreateICmpSGT(tmpLoad, ConstantInt::get(intType, 0));
+            // 修复：调整条件分支参数顺序
+            builder.CreateCondBr(tmpCond, innerLoopCond, loopExitCond);
+            builder.SetInsertPoint(loopExitCond);
             builder.CreateBr(NewBB);
-
         }
 
-        // 内循环结束，跳回外循环
         builder.SetInsertPoint(innerLoopEnd);
-        builder.CreateBr(TmpLoopCond); // 跳回外循环体块
-        
+        builder.CreateBr(tmpLoopCond);
 
-        TmpLoopCond = innerLoopCond;
-        TmpLoopBody = innerLoopBody;
-        TmpLoopEnd = innerLoopEnd;
-        
+        tmpLoopCond = innerLoopCond;
+        tmpLoopBody = innerLoopBody;
+        tmpLoopEnd = innerLoopEnd;
     }
 }
 
 PreservedAnalyses ForObsPass::run(Module &M, ModuleAnalysisManager &AM)
 {
+    readConfig("/home/zzzccc/cxzz/Generic_obfuscator/config/config.json");
     bool IsChanged = false;
     double Probability = 0.5;
-    // 初始化随机种子
     srand(time(nullptr));
-    // 获取 LLVM 上下文和变量类型
     LLVMContext &context = M.getContext();
     IntegerType *intType = Type::getInt32Ty(context);
-    Value *N = ConstantInt::get(intType, 10); // 外循环边界
-    Value *M1 = ConstantInt::get(intType, 5);  // 内循环边界
-    readConfig("/home/zzzccc/cxzz/KObfucator/config/config.json");
-    if (ForObs.model){
+    Value *innerLoopBoundary; // 外循环边界
+    Value *outerLoopBoundary;  // 内循环边界
+    if (forObs.op1){
+        innerLoopBoundary = ConstantInt::get(intType, forObs.op1);
+    }else {
+        innerLoopBoundary = ConstantInt::get(intType, 10);
+    }
+    if (forObs.op2){
+        outerLoopBoundary = ConstantInt::get(intType, forObs.op2);
+    }else {
+        outerLoopBoundary = ConstantInt::get(intType, 5);
+    }
+    if (forObs.model){
         for (llvm::Function &F : M) {
             int addCount = 0;
-            if(ForObs.model == 2){
-                if(std::find(ForObs.enable_function.begin(),ForObs.enable_function.end(),F.getName()) == ForObs.enable_function.end()){
-                    continue;                    
-                }
-            }else if (ForObs.model == 3)
-            {                
-                if(std::find(ForObs.disable_function.begin(),ForObs.disable_function.end(),F.getName()) != ForObs.disable_function.end()){
-                    continue;                    
-                }
+            if (shouldSkip(F, forObs)) {
+                continue;
             }
-            
-            llvm::outs() << "Running ForObsPass on function: " << F.getName() << "\n";
-
-            // 遍历函数中的每个基本块
+            PrintInfo("Running ForObsPass on function: " , F.getName().str());
             for (BasicBlock &BB : F)
             {
                 IRBuilder<> Builder(context);
                 if (BB.size() < 2)
                 {
-                    // llvm::errs() << "Skipping block with less than 4 instructions: " << BB.getName() << "\n";
                     continue;
                 }
-                // 确保基本块没有被处理或生成过循环
-                if (forpass_processedBlocks.count(&BB) == 0 && generatedBlocks.count(&BB) == 0)
+                // Ensure that basic blocks have not been processed or generated loops
+                if (forobsProcessedBlocks.count(&BB) == 0 && generatedBlocks.count(&BB) == 0)
                 {
-                    // 第一步：选择一个随机的指令作为拆分点
-                    Instruction *splitInst = nullptr;
-                    unsigned instructionIndex = rand() % (BB.size() - 1);
+                    Instruction *firstNonSpecial = BB.getFirstNonPHIOrDbgOrLifetime();
+                    if (!firstNonSpecial || firstNonSpecial == &BB.back()) {
+                        continue;
+                    }
+
+                    auto beginIt = BB.begin();
+                    auto endIt = BB.end();
+                    --endIt;
+
+                    unsigned validStartIndex = 0;
+                    unsigned validEndIndex = BB.size() - 1;
+                    for (auto it = BB.begin(); it != BB.end(); ++it, ++validStartIndex) {
+                        if (&(*it) == firstNonSpecial) {
+                            break;
+                        }
+                    }
+                    if (validStartIndex >= validEndIndex) {
+                        continue;
+                    }
+
+                    // choose the insert pos randomly
+                    unsigned instructionIndex = validStartIndex + (rand() % (validEndIndex - validStartIndex));
                     auto it = BB.begin();
                     std::advance(it, instructionIndex);
-                    splitInst = &(*it);
-                    // 第二步：在选定的指令处拆分基本块
+                    Instruction *splitInst = &(*it);
+
                     BasicBlock *newBB = SplitBlock(&BB, splitInst);
-                    
-                    // 再拆一次
-                    instructionIndex = rand() % (newBB->size() - 1);
-                    auto it2 = newBB->begin();
-                    std::advance(it2, instructionIndex);
-                    splitInst = &(*it2);  
-                    BasicBlock *newnewBB = SplitBlock(newBB, splitInst);
 
-                    // 第三步：为每层循环分配内存给循环变量，并初始化它
                     Builder.SetInsertPoint(&*BB.getFirstInsertionPt());
-                    // 生成一个 0 到 1 之间的随机浮点数，并与概率进行比较
-                    if ((rand() / (double)RAND_MAX) < Probability )
+                    if ((rand() / (double)RAND_MAX) < Probability)
                     {
-                        if(addCount >= 3){
+                        // Prevent excessive insertion from affecting efficiency
+                        if (addCount >= 3) {
                             break;
-                        }    
-                        // 调用 insertNestedLoop 函数插入二重循环
-                        insertNestedLoop(Builder, context, F, N, M1, intType, &BB, newBB,newnewBB, 4);
-
-                        // 标记基本块已修改
-                        IsChanged = true;
-
-                        // 将当前基本块添加到已处理和已生成循环的集合中
-                        forpass_processedBlocks.insert(&BB);
-                        generatedBlocks.insert(newBB); // 标记新生成的基本块
-                        generatedBlocks.insert(newnewBB); 
+                        }
+                        insertMultipleLoop(Builder, context, F, innerLoopBoundary, outerLoopBoundary, &BB,newBB, 4);
+                        forobsProcessedBlocks.insert(&BB);
+                        generatedBlocks.insert(newBB);
                         llvm::outs() << "Inserted nested loop into Func: " << F.getName() << "\n";
                         addCount++;
+                        IsChanged = true;
                     }
                 }
             }
 
         }}
-
-    // 返回适当的分析结果
     if (IsChanged)
     {
         return PreservedAnalyses::none();

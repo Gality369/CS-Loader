@@ -1,5 +1,5 @@
-#ifndef LLVM_KObfucator_TaintAnalysis_H
-#define LLVM_KObfucator_TaintAnalysis_H
+#ifndef LLVM_Generic_obfuscator_TaintAnalysis_H
+#define LLVM_Generic_obfuscator_TaintAnalysis_H
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/Function.h"
@@ -11,7 +11,7 @@
 #include <vector>
 using namespace llvm;
 using namespace std;
-namespace KObfucator {
+namespace Generic_obfuscator {
 
 class TaintAnalysis {
 private:
@@ -43,5 +43,5 @@ public:
     void printUnnecessarySet() const;
 
 }; // Class TainAnalysis end
-} // namespace KObfucator
+} // namespace KOtoamatsukami
 #endif

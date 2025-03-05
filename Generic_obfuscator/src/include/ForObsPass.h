@@ -1,5 +1,5 @@
-#ifndef LLVM_KObfucator_ForObsPass_H
-#define LLVM_KObfucator_ForObsPass_H
+#ifndef LLVM_Generic_obfuscator_ForObsPass_H
+#define LLVM_Generic_obfuscator_ForObsPass_H
 
 #include "llvm/IR/PassManager.h"
 

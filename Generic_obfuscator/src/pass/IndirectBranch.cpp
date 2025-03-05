@@ -10,8 +10,9 @@
 #include <cstdio>
 #include <string>
 #include <vector>
+#include "Log.hpp"
 using namespace llvm;
-namespace KObfucator {
+namespace Generic_obfuscator {
 namespace IndirectBranch {
 
     void process(Function& F)
@@ -21,7 +22,7 @@ namespace IndirectBranch {
         Type* PtrValueType = Type::getIntNTy(F.getContext(), PtrSize * 8);
         auto module = F.getParent();
 
-        std::map<BasicBlock*, KObfucator::IndirectBBinfo> indirectBBinfos;
+        std::map<BasicBlock*, Generic_obfuscator::IndirectBBinfo> indirectBBinfos;
         int indirectBBs_count = 0;
         std::vector<BranchInst*> branchInsts;
         auto gloablName = F.getName().str() + "_Jmuptable";
@@ -115,27 +116,19 @@ namespace IndirectBranch {
         }
     }
 }
-} // namespace KObfucator
+} // namespace Generic_obfuscator
 PreservedAnalyses IndirectBranch::run(Module& M, ModuleAnalysisManager& AM)
 {
-    readConfig("/home/zzzccc/cxzz/KObfucator/config/config.json");
+    readConfig("/home/zzzccc/cxzz/Generic_obfuscator/config/config.json");
     bool is_processed = false;
-    if (indirect_branch.model) {
+    if (indirectBranch.model) {
         for (llvm::Function& F : M) {
-            if (indirect_branch.model == 2) {
-                if (std::find(indirect_branch.enable_function.begin(), indirect_branch.enable_function.end(), F.getName()) == indirect_branch.enable_function.end()) {
-                    continue;
-                }
-            } else if (indirect_branch.model == 3) {
-                if (std::find(indirect_branch.disable_function.begin(), indirect_branch.disable_function.end(), F.getName()) != indirect_branch.disable_function.end()) {
-                    continue;
-                }
-            }
-            if (!F.hasExactDefinition()) {
+            if (shouldSkip(F, indirectBranch)) {
                 continue;
             }
-            KObfucator::IndirectBranch::process(F);
+            Generic_obfuscator::IndirectBranch::process(F);
             is_processed = true;
+            PrintSuccess("IndirectBranch successfully process func ", F.getName().str());
         }
     }
     if (is_processed) {

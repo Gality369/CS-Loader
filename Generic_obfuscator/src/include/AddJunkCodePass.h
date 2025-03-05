@@ -1,5 +1,5 @@
-#ifndef LLVM_KObfucator_AddJunkCodePass_H
-#define LLVM_KObfucator_AddJunkCodePass_H
+#ifndef LLVM_Generic_obfuscator_AddJunkCodePass_H
+#define LLVM_Generic_obfuscator_AddJunkCodePass_H
 
 #include "llvm/IR/PassManager.h"
 

@@ -1,4 +1,4 @@
-// 这里是有可能由于并发bug导致多次解密的 在存在并发的情况下需要注意
+// ![Fix Me]: It is possible that multiple decryptions may occur due to concurrency bugs. You need to pay attention when concurrency exists. -- Solved via LLVM native atomic operations
 #include "GVEncrypt.h"
 #include "config.h"
 #include "utils.hpp"
@@ -14,18 +14,21 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
+#include "llvm/Support/Alignment.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/raw_ostream.h"
 #include <cstdint>
 #include <map>
 #include <optional>
 #include <set>
 #include <string>
 #include <vector>
+#include "Log.hpp"
 std::set<llvm::GlobalVariable*> needEncGV;
 int needEncGV_count = 0;
-std::map<llvm::GlobalVariable*, KObfucator::GVEncrypt::GVInfo> needEncGVInfos;
+std::map<llvm::GlobalVariable*, Generic_obfuscator::GVEncrypt::GVInfo> needEncGVInfos;
 std::set<llvm::GlobalVariable*> GVUsedByFunc;
-bool KObfucator::GVEncrypt::shouldSkip(GlobalVariable& GV)
+bool Generic_obfuscator::GVEncrypt::shouldSkip(GlobalVariable& GV)
 {
     if (GV.getName().startswith("llvm.")) {
         return true;
@@ -44,10 +47,14 @@ bool KObfucator::GVEncrypt::shouldSkip(GlobalVariable& GV)
     if (GV.hasSection()) {
         return true;
     }
+    llvm::Constant* initializer = GV.getInitializer();
+    if (llvm::isa<llvm::ConstantAggregateZero>(initializer)){
+        return true;
+    }
     return false;
 }
 
-Function* KObfucator::GVEncrypt::defineDecryptFunction(Module* M, GlobalVariable* GVIsDecrypted)
+Function* Generic_obfuscator::GVEncrypt::defineDecryptFunction(Module* M, GlobalVariable* GVIsDecrypted)
 {
     std::vector<Type*> Params;
     Params.push_back(Type::getInt32Ty(M->getContext())); // index
@@ -55,7 +62,7 @@ Function* KObfucator::GVEncrypt::defineDecryptFunction(Module* M, GlobalVariable
     Params.push_back(Type::getInt32Ty(M->getContext())); // len
     Params.push_back(Type::getInt8Ty(M->getContext())->getPointerTo()); // GV
     FunctionType* FT = FunctionType::get(Type::getVoidTy(M->getContext()), Params, false);
-    Function* F = Function::Create(FT, GlobalValue::PrivateLinkage, "_KObfucator_decryptGV", M);
+    Function* F = Function::Create(FT, GlobalValue::PrivateLinkage, "_Generic_obfuscator_decryptGV", M);
     BasicBlock* entryBB = BasicBlock::Create(M->getContext(), "entry", F);
     BasicBlock* bodyBB = BasicBlock::Create(M->getContext(), "body", F);
     BasicBlock* endBB = BasicBlock::Create(M->getContext(), "end", F);
@@ -74,8 +81,17 @@ Function* KObfucator::GVEncrypt::defineDecryptFunction(Module* M, GlobalVariable
     builder.CreateStore(ConstantInt::get(Type::getInt32Ty(M->getContext()), 0), arrayIndexPtr);
     Type* elemType = GVIsDecrypted->getValueType()->getArrayElementType();
     Value* elementPtr = builder.CreateInBoundsGEP(elemType, GVIsDecrypted, index);
-    Value* elementValue = builder.CreateLoad(Type::getInt1Ty(M->getContext()), elementPtr);
-    Value* cond = builder.CreateICmpEQ(elementValue, ConstantInt::get(Type::getInt1Ty(M->getContext()), 0));
+
+    // Atomic option
+    Type* i8Ty = Type::getInt8Ty(M->getContext());
+    Value* expected = ConstantInt::get(i8Ty, 0);
+    Value* desired = ConstantInt::get(i8Ty, 1);
+    AtomicCmpXchgInst* cmpxchg = builder.CreateAtomicCmpXchg(
+        elementPtr, expected, desired,
+        MaybeAlign(), // 根据实际情况调整对齐
+        AtomicOrdering::AcquireRelease,
+        AtomicOrdering::Acquire);
+    Value* cond = builder.CreateExtractValue(cmpxchg, 1);
     builder.CreateCondBr(cond, forCond, endBB);
 
     // forCond
@@ -108,7 +124,7 @@ Function* KObfucator::GVEncrypt::defineDecryptFunction(Module* M, GlobalVariable
     return F;
 }
 
-bool KObfucator::GVEncrypt::encryptGV(llvm::Function* F,  Function* decryptFunction)
+bool Generic_obfuscator::GVEncrypt::encryptGV(llvm::Function* F,  Function* decryptFunction)
 {
 
     for (auto& BB : *F) {
@@ -141,7 +157,7 @@ bool KObfucator::GVEncrypt::encryptGV(llvm::Function* F,  Function* decryptFunct
         params.push_back(gvAsUInt8Ptr);
         builder.CreateCall(decryptFunction, params);
     }
-    F->print(llvm::outs());
+    // F->print(llvm::outs());
     return true;
 }
 static void encryptGvData(uint8_t* data, uint8_t key, int32_t len)
@@ -152,15 +168,15 @@ static void encryptGvData(uint8_t* data, uint8_t key, int32_t len)
 }
 PreservedAnalyses GVEncrypt::run(Module& M, ModuleAnalysisManager& AM)
 {
-    readConfig("/home/zzzccc/cxzz/KObfucator/config/config.json");
+    readConfig("/home/zzzccc/cxzz/Generic_obfuscator/config/config.json");
     bool is_processed = false;
     const DataLayout& DL = M.getDataLayout();
-    if (gv_encrypt.model) {
+    if (gvEncrypt.model) {
         for (auto& GV : M.globals()) {
-            if (!KObfucator::GVEncrypt::shouldSkip(GV) && needEncGV.find(&GV) == needEncGV.end()) {
+            if (!Generic_obfuscator::GVEncrypt::shouldSkip(GV) && needEncGV.find(&GV) == needEncGV.end()) {
                 needEncGV.insert(&GV);
                 uint32_t size = DL.getTypeAllocSize(GV.getValueType());
-                KObfucator::GVEncrypt::GVInfo new_gv_info;
+                Generic_obfuscator::GVEncrypt::GVInfo new_gv_info;
                 new_gv_info.index = needEncGV_count++;
                 new_gv_info.key = (uint8_t)getRandomNumber();
                 new_gv_info.len = size;
@@ -178,50 +194,37 @@ PreservedAnalyses GVEncrypt::run(Module& M, ModuleAnalysisManager& AM)
                     encryptGvData((uint8_t*)tmp, needEncGVInfos[&GV].key, size);
                     GV.setConstant(false);
                     GV.setInitializer(ConstantDataArray::getRaw(StringRef((char*)tmp, size),
-                        CA->getNumElements(),
-                        CA->getElementType()));
+                    CA->getNumElements(),
+                    CA->getElementType()));
                 }
             }
         }
-        // 初始化全局数组用于判断是否已经解密
+        // Initialize the global array to determine whether it has been decrypted
         std::vector<Constant*> Values(needEncGV_count);
         std::string globalName = M.getName().str() + "_isDecrypted";
         llvm::Module* module = &M;
         ArrayType* AT = ArrayType::get(
-            Type::getInt1Ty(M.getContext()), needEncGV_count);
+            Type::getInt8Ty(M.getContext()), needEncGV_count);
         GlobalVariable* GVIsDecrypted = (GlobalVariable*)module->getOrInsertGlobal(globalName, AT);
         for (int i = 0; i < needEncGV_count; i++) {
-            Constant* CValue = ConstantInt::get(Type::getInt1Ty(M.getContext()), 0);
+            Constant* CValue = ConstantInt::get(Type::getInt8Ty(M.getContext()), 0);
             Values[i] = CValue;
         }
-        Constant* ValueArray = ConstantArray::get(AT, ArrayRef<Constant*>(Values));
+        Constant* valueArray = ConstantArray::get(AT, ArrayRef<Constant*>(Values));
         if (!GVIsDecrypted->hasInitializer()) {
-            GVIsDecrypted->setInitializer(ValueArray);
+            GVIsDecrypted->setInitializer(valueArray);
             GVIsDecrypted->setLinkage(GlobalValue::PrivateLinkage);
         }
 
-        Function* decryptFunction = KObfucator::GVEncrypt::defineDecryptFunction(&M, GVIsDecrypted);
+        Function* decryptFunction = Generic_obfuscator::GVEncrypt::defineDecryptFunction(&M, GVIsDecrypted);
         for (llvm::Function& F : M) {
-            llvm::outs() << F.getName().str() << "\n";
-            if (F.getName().str().find("KObfucator") != std::string::npos) {
+            if (shouldSkip(F, gvEncrypt)) {
                 continue;
             }
-            
-            if (gv_encrypt.model == 2) {
-                if (std::find(gv_encrypt.enable_function.begin(), gv_encrypt.enable_function.end(), F.getName()) == gv_encrypt.enable_function.end()) {
-                    continue;
-                }
-            } else if (gv_encrypt.model == 3) {
-                if (std::find(gv_encrypt.disable_function.begin(), gv_encrypt.disable_function.end(), F.getName()) != gv_encrypt.disable_function.end()) {
-                    continue;
-                }
-            }
-            if (!F.hasExactDefinition()) {
-                continue;
-            }
-            KObfucator::GVEncrypt::encryptGV(&F, decryptFunction);
+            Generic_obfuscator::GVEncrypt::encryptGV(&F, decryptFunction);
             is_processed = true;
         }
+        PrintSuccess("GVEncrypt successfully process module ", M.getName().str());
     }
 
     if (is_processed) {

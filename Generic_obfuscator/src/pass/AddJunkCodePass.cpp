@@ -1,5 +1,5 @@
-
 #include "../include/AddJunkCodePass.h"
+#include "Log.hpp"
 #include "config.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/IR/BasicBlock.h"
@@ -12,9 +12,23 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/IR/InlineAsm.h"
+#include <string>
+#include <vector>
 
 #include <cstdlib> // rand()
 using namespace llvm;
+
+// todo https://zhuanlan.zhihu.com/p/640711859
+std::vector<std::string> arm64AsmCode = {
+    "udf #0x5397FB1\n"
+    ".long 87654321\n"
+    ".long 12345678\n",
+
+    "b #0x10\n"
+    "udf #0x5397FB1\n"
+    ".long 87654321\n"
+    ".long 12345678\n"
+};
 std::vector<std::string> x86AsmCode = {
     "call {0}f\n"
     "{0}:\n"
@@ -34,6 +48,7 @@ std::vector<std::string> x86AsmCode = {
     ".byte 0x21\n"
     "{1}:\n"
     "pop %ebx\n"};
+
 std::vector<std::string> x64AsmCode = {
     "call {0}f\n"
     "{0}:\n"
@@ -59,32 +74,16 @@ PreservedAnalyses AddJunkCodePass::run(Module &M, ModuleAnalysisManager &AM)
     int flowerIndex = 0;
     double addJunkCodeProbability = 0.2;
     srand(time(nullptr));
-    readConfig("/home/zzzccc/cxzz/KObfucator/config/config.json");
-    if (Junkcode.model)
+    readConfig("/home/zzzccc/cxzz/Generic_obfuscator/config/config.json");
+    if (junkCode.model)
     {
         for (llvm::Function &F : M)
         {
-            if (!F.hasExactDefinition())
-            {
+            if (shouldSkip(F, junkCode)){
                 continue;
             }
             int flowerCount = 0;
-            int bb_index = 0;
-            if (Junkcode.model == 2)
-            {
-                if (std::find(Junkcode.enable_function.begin(), Junkcode.enable_function.end(), F.getName()) == Junkcode.enable_function.end())
-                {
-                    continue;
-                }
-            }
-            else if (Junkcode.model == 3)
-            {
-                if (std::find(Junkcode.disable_function.begin(), Junkcode.disable_function.end(), F.getName()) != Junkcode.disable_function.end())
-                {
-                    continue;
-                }
-            }
-            llvm::outs() << "Running JunkcodePass on function: " << F.getName() << "\n";
+            PrintInfo("Running JunkcodePass on function: ",F.getName().str());
             for (auto &BB : F)
             {
                 if (flowerCount >= 5)
@@ -101,42 +100,27 @@ PreservedAnalyses AddJunkCodePass::run(Module &M, ModuleAnalysisManager &AM)
                     {
                         IRBuilder<> builder(&I);
                         auto *FType = llvm::FunctionType::get(builder.getVoidTy(), false);
-                        int flowerClass = rand() % 2;
-                        // int flowerClass = 1;
                         std::string asmCode;
-                        if (flowerClass == 0)
+                        if (targetArch == Arch::X86)
                         {
-                            if (targetArch == Arch::X86)
-                            {
-                                asmCode = llvm::formatv(
-                                    x86AsmCode[flowerClass].c_str(),
-                                    flowerIndex++);
-                            }
-                            else if (targetArch == Arch::X86_64)
-                            {
-                                asmCode = llvm::formatv(
-                                    x64AsmCode[flowerClass].c_str(),
-                                    flowerIndex++);
-                            }
+                            int flowerClass = rand() % x86AsmCode.size();
+                            asmCode = llvm::formatv(
+                                x86AsmCode[flowerClass].c_str(),
+                                flowerIndex++);
                         }
-                        else
+                        else if (targetArch == Arch::X86_64)
                         {
-                            if (targetArch == Arch::X86)
-                            {
-                                asmCode = llvm::formatv(
-                                    x86AsmCode[flowerClass].c_str(),
-                                    flowerIndex++,
-                                    flowerIndex++);
-                            }
-                            else if (targetArch == Arch::X86_64)
-                            {
-                                asmCode = llvm::formatv(
-                                    x64AsmCode[flowerClass].c_str(),
-                                    flowerIndex++,
-                                    flowerIndex++);
-                            }
+                            int flowerClass = rand() % x64AsmCode.size();
+                            asmCode = llvm::formatv(
+                                x64AsmCode[flowerClass].c_str(),
+                                flowerIndex++);
                         }
-                        // llvm::outs() << archToString(targetArch) <<"\n";
+                        else if (targetArch == Arch::ARM64) {
+                            int flowerClass = rand() % arm64AsmCode.size();
+                            asmCode = llvm::formatv(
+                                arm64AsmCode[flowerClass].c_str(),
+                                flowerIndex++);
+                        }
                         InlineAsm *rawAsm = llvm::InlineAsm::get(FType, asmCode, "",
                                                                  /* hasSideEffects */ true,
                                                                  /* isStackAligned */ true);
@@ -146,6 +130,7 @@ PreservedAnalyses AddJunkCodePass::run(Module &M, ModuleAnalysisManager &AM)
                     }
                 }
             }
+            PrintSuccess("AddJunkCodePass successfully process func ", F.getName().str());
         }
     }
 

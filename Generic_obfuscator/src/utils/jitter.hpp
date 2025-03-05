@@ -20,7 +20,7 @@ class ObjectFile;
 }
 }
 
-namespace KObfucator {
+namespace Generic_obfuscator {
 class Jitter {
 public:
   Jitter(const std::string &Triple);

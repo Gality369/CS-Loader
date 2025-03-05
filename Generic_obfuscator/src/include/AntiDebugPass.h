@@ -1,5 +1,5 @@
-#ifndef LLVM_KObfucator_AntiDebugPass_H
-#define LLVM_KObfucator_AntiDebugPass_H
+#ifndef LLVM_Generic_obfuscator_AntiDebugPass_H
+#define LLVM_Generic_obfuscator_AntiDebugPass_H
 
 #include "llvm/IR/PassManager.h"
 #include "llvm/ADT/Statistic.h"
@@ -20,6 +20,8 @@ namespace llvm {
 class AntiDebugPass : public PassInfoMixin<AntiDebugPass> {
 public:
   PreservedAnalyses run(Module &F, ModuleAnalysisManager &AM);
+  // Prevent multiple insertions
+  bool isInserted = false;
   //保证不被跳过
   static bool isRequired() { return true; }
   

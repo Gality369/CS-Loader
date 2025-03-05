@@ -1,10 +1,12 @@
-#ifndef KObfucator_CONFIG_H
-#define KObfucator_CONFIG_H
+#ifndef Generic_obfuscator_CONFIG_H
+#define Generic_obfuscator_CONFIG_H
 
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <string>
+#include "llvm/IR/Function.h"
+#include "llvm/ADT/StringRef.h"
 #include "json.hpp"
 using json = nlohmann::json;
 
@@ -37,26 +39,30 @@ struct FunctionSettings {
 };
 
 extern FunctionSettings loopen;
-extern FunctionSettings ForObs;
-extern FunctionSettings SplitBasicBlocks;
+extern FunctionSettings forObs;
+extern FunctionSettings splitBasicBlocks;
 extern FunctionSettings branch2call;
 extern FunctionSettings branch2call_32;
-extern FunctionSettings Junkcode;
-extern FunctionSettings Antihook;
-extern FunctionSettings Antidebug;
-extern FunctionSettings indirect_branch;
-extern FunctionSettings indirect_call;
-extern FunctionSettings bogus_control_flow;
+extern FunctionSettings junkCode;
+extern FunctionSettings antiHook;
+extern FunctionSettings antiDebug;
+extern FunctionSettings indirectCall;
+extern FunctionSettings indirectBranch;
+extern FunctionSettings bogusControlFlow;
 extern FunctionSettings substitution;
 extern FunctionSettings flatten;
-extern FunctionSettings gv_encrypt;
+extern FunctionSettings gvEncrypt;
+
 extern Arch targetArch ;
 extern int isConfigured;
 extern int x[2048];
 Arch parseArch(const std::string& target);
-void parseConfig(const std::string& filename);
+int parseConfig(const std::string& filename);
+// First look for the parameters passed in as a config filed,then search the Generic_obfuscator.config in current dir
 void readConfig(const std::string& filename);
 std::string archToString(Arch arch);
+
+bool shouldSkip(const llvm::Function& F,const FunctionSettings& setting);
 #endif  // CONFIG_H
 
 

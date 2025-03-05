@@ -1,5 +1,5 @@
-#ifndef LLVM_KObfucator_Flatten_H
-#define LLVM_KObfucator_Flatten_H
+#ifndef LLVM_Generic_obfuscator_Flatten_H
+#define LLVM_Generic_obfuscator_Flatten_H
 //现在仅适配了AArch64架构 因为不同架构之间汇编不一样
 #include "llvm/IR/PassManager.h"
 #include "llvm/ADT/Statistic.h"

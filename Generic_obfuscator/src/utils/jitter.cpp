@@ -39,7 +39,7 @@ using namespace llvm::orc;
 using namespace omvll;
 ExitOnError ExitOnErr;
 
-namespace KObfucator
+namespace Generic_obfuscator
 {
   // 构造函数
   Jitter::Jitter(const std::string &Triple)
@@ -53,7 +53,7 @@ namespace KObfucator
   ThreadSafeModule createModuleWithInlineAsm(const std::string &Asm, const std::string &FName)
   {
     auto Context = std::make_unique<LLVMContext>();
-    auto M = std::make_unique<llvm::Module>("__KObfucator_asm_jit", *Context);
+    auto M = std::make_unique<llvm::Module>("__Generic_obfuscator_asm_jit", *Context);
 
     // Create the function
     Function *F = Function::Create(
@@ -84,9 +84,9 @@ namespace KObfucator
 
   std::unique_ptr<MemoryBuffer> Jitter::jitAsm(const std::string &Asm, size_t Size)
   {
-    static constexpr const char FNAME[] = "__KObfucator_asm_func";
+    static constexpr const char FNAME[] = "__Generic_obfuscator_asm_func";
     auto M = createModuleWithInlineAsm(Asm, FNAME);
-    ExitOnErr.setBanner("KObfucator_jitasm: ");
+    ExitOnErr.setBanner("Generic_obfuscator_jitasm: ");
     auto J = ExitOnErr(LLJITBuilder().create());
     ExitOnErr(J->addIRModule(std::move(M)));
     auto Func = J->lookup(FNAME);
@@ -125,14 +125,14 @@ namespace KObfucator
 //   // Load the LLVM IR file
 //   LLVMContext Context;
 //   SMDiagnostic Error;
-//   std::unique_ptr<Module> M = parseIRFile("/home/zzzccc/cxzz/KObfucator/test/test1.ll", Error, Context);
+//   std::unique_ptr<Module> M = parseIRFile("/home/zzzccc/cxzz/Generic_obfuscator/test/test1.ll", Error, Context);
 //   // Create a Jitter instance using the current platform's triple
 //   std::string TargetTriple = M->getTargetTriple();
 //   if (TargetTriple.empty()) {
 //       TargetTriple = llvm::sys::getDefaultTargetTriple();
 //   }
 //   outs() << TargetTriple;
-//   KObfucator::Jitter jitter(TargetTriple);
+//   Generic_obfuscator::Jitter jitter(TargetTriple);
 
 //   if (!M)
 //   {
@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
   LLVMContext Context;
 
   // 创建Jitter实例
-  KObfucator::Jitter jitter(llvm::sys::getDefaultTargetTriple());
+  Generic_obfuscator::Jitter jitter(llvm::sys::getDefaultTargetTriple());
 
   // C语言代码字符串
   std::string CCode = R"(
@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
         return a + b;
     }
   )";
-  std::vector<JsonUtils::QuadraticFunction> QuadraticFunVec = JsonUtils::getForPassFunc("/home/zzzccc/cxzz/KObfucator/config/quadratic_equations.json");
+  std::vector<JsonUtils::QuadraticFunction> QuadraticFunVec = JsonUtils::getForPassFunc("/home/zzzccc/cxzz/Generic_obfuscator/config/quadratic_equations.json");
   llvm::Module TM = nullptr;
   llvm::Module HM = nullptr;
   // 将C代码编译为LLVM IR

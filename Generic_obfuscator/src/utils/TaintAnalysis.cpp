@@ -1,6 +1,6 @@
 #include "TaintAnalysis.h"
 
-std::size_t KObfucator::TaintAnalysis::hashSet(const std::set<GlobalVariable*>& gv_set)
+std::size_t Generic_obfuscator::TaintAnalysis::hashSet(const std::set<GlobalVariable*>& gv_set)
 {
     std::size_t hashValue = 0;
 
@@ -11,7 +11,7 @@ std::size_t KObfucator::TaintAnalysis::hashSet(const std::set<GlobalVariable*>& 
     return hashValue;
 }
 
-void KObfucator::TaintAnalysis::traversePath(BasicBlock* BB, std::set<GlobalVariable*>& gv_set, std::set<GlobalVariable *>& needEncGV)
+void Generic_obfuscator::TaintAnalysis::traversePath(BasicBlock* BB, std::set<GlobalVariable*>& gv_set, std::set<GlobalVariable *>& needEncGV)
 {
     if (!BB || visitedBlocks.count(BB)) {
         return;
@@ -52,7 +52,7 @@ void KObfucator::TaintAnalysis::traversePath(BasicBlock* BB, std::set<GlobalVari
     gv_set_each_path.clear();
     currentPath.pop_back();
 }
-void KObfucator::TaintAnalysis::analyzeFunctionFlowSensitive(Function& F, std::set<GlobalVariable *>& needEncGV)
+void Generic_obfuscator::TaintAnalysis::analyzeFunctionFlowSensitive(Function& F, std::set<GlobalVariable *>& needEncGV)
 {
     gv_set.clear();
     gv_set_each_path.clear();
@@ -70,12 +70,12 @@ void KObfucator::TaintAnalysis::analyzeFunctionFlowSensitive(Function& F, std::s
     traversePath(entryBB, gv_set,needEncGV);
 }
 
-const std::set<Instruction*>& KObfucator::TaintAnalysis::getUnnecessarySet() const
+const std::set<Instruction*>& Generic_obfuscator::TaintAnalysis::getUnnecessarySet() const
 {
     return unnecessarySet;
 }
 
-void KObfucator::TaintAnalysis::printUnnecessarySet() const
+void Generic_obfuscator::TaintAnalysis::printUnnecessarySet() const
 {
     for (auto* I : unnecessarySet) {
         errs() << "Accessed Instruction: " << *I << "\n";

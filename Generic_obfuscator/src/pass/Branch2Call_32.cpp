@@ -12,6 +12,7 @@
 #include <random>
 #include <set>
 #include <sstream>
+#include "Log.hpp"
 using namespace llvm;
 #define MaxBlockNumber 4096
 namespace {
@@ -20,6 +21,7 @@ int block_count = 0;
 std::vector<BasicBlock*> BBTargets;
 std::set<BasicBlock*> processedBlocks;
 GlobalVariable* AllFunctions_IndirectBrTargets = nullptr;
+
 
 ArrayType* OuterArrayTy = nullptr;
 ArrayType* ATy = nullptr;
@@ -147,7 +149,7 @@ int ProcessPredecessorsAndInsertFuncCall(Function& F, BasicBlock& BB,
                                      "xor %ebx, %ebx\n"
                                      "mov $0, %bl\n" // Move Cond to rbx
                                      "mov %ebx, %esi\n"
-                                     "call IndirectConditionalJumpFunc\n",
+                                     "call generic_obfuscatorSpringboardFunctionCond\n",
 
                     "r",
                     true);
@@ -196,7 +198,7 @@ int ProcessPredecessorsAndInsertFuncCall(Function& F, BasicBlock& BB,
                     "push %esi\n"
                     "mov $$0x"
                         + hexValue + ", %edi\n"
-                                     "call IndirectCallFunc\n",
+                                     "call generic_obfuscatorSpringboardFunction\n",
                     "",
                     true);
                 Builder.CreateCall(Asm);
@@ -243,18 +245,18 @@ Value* getBasicBlockAddress(Value* FunctionID, Value* BlockID,
     return BlockAddr;
 }
 
-void createIndirectCallFunc(Module& M)
+void creategeneric_obfuscatorSpringboardFunction(Module& M)
 {
     LLVMContext& Ctx = M.getContext();
-    if (M.getFunction("IndirectCallFunc")) {
+    if (M.getFunction("generic_obfuscatorSpringboardFunction")) {
         return;
     }
-    FunctionType* IndirectCallFuncTy = FunctionType::get(Type::getVoidTy(Ctx), {}, false);
-    Function* IndirectCallFunc = Function::Create(
-        IndirectCallFuncTy, Function::ExternalLinkage, "IndirectCallFunc", &M);
-    BasicBlock* EntryBB = BasicBlock::Create(Ctx, "entry", IndirectCallFunc);
+    FunctionType* generic_obfuscatorSpringboardFunctionTy = FunctionType::get(Type::getVoidTy(Ctx), {}, false);
+    Function* generic_obfuscatorSpringboardFunction = Function::Create(
+        generic_obfuscatorSpringboardFunctionTy, Function::ExternalLinkage, "generic_obfuscatorSpringboardFunction", &M);
+    BasicBlock* EntryBB = BasicBlock::Create(Ctx, "entry", generic_obfuscatorSpringboardFunction);
     IRBuilder<> Builder(EntryBB);
-    IndirectCallFunc->addFnAttr(Attribute::Naked); // 裸函数属性，不生成栈帧
+    generic_obfuscatorSpringboardFunction->addFnAttr(Attribute::Naked); // 裸函数属性，不生成栈帧
     FunctionType* AsmFuncTy = FunctionType::get(Type::getInt32Ty(Ctx), {}, false);
     InlineAsm* LoadEax = InlineAsm::get(AsmFuncTy, "mov %edi, $0", "=r", true);
     Value* EaxValue = Builder.CreateCall(LoadEax);
@@ -273,18 +275,18 @@ void createIndirectCallFunc(Module& M)
     Builder.CreateCall(BranchAsm, { BBAddr });
     Builder.CreateRetVoid();
 }
-void createIndirectConditionalJumpFunc(Module& M)
+void creategeneric_obfuscatorSpringboardFunctionCond(Module& M)
 {
     LLVMContext& Ctx = M.getContext();
-    if (M.getFunction("IndirectConditionalJumpFunc")) {
+    if (M.getFunction("generic_obfuscatorSpringboardFunctionCond")) {
         return;
     }
-    std::string funcName = "IndirectConditionalJumpFunc";
-    FunctionType* IndirectConditionalJumpFuncTy = FunctionType::get(Type::getVoidTy(Ctx), {}, false);
-    Function* IndirectConditionalJumpFunc = Function::Create(
-        IndirectConditionalJumpFuncTy, Function::ExternalLinkage, funcName, &M);
-    IndirectConditionalJumpFunc->addFnAttr(Attribute::Naked); // 裸函数属性，不生成栈帧
-    BasicBlock* EntryBB = BasicBlock::Create(Ctx, "entry", IndirectConditionalJumpFunc);
+    std::string funcName = "generic_obfuscatorSpringboardFunctionCond";
+    FunctionType* generic_obfuscatorSpringboardFunctionCondTy = FunctionType::get(Type::getVoidTy(Ctx), {}, false);
+    Function* generic_obfuscatorSpringboardFunctionCond = Function::Create(
+        generic_obfuscatorSpringboardFunctionCondTy, Function::ExternalLinkage, funcName, &M);
+    generic_obfuscatorSpringboardFunctionCond->addFnAttr(Attribute::Naked); // 裸函数属性，不生成栈帧
+    BasicBlock* EntryBB = BasicBlock::Create(Ctx, "entry", generic_obfuscatorSpringboardFunctionCond);
     IRBuilder<> Builder(EntryBB);
 
     InlineAsm* LoadEax = InlineAsm::get(FunctionType::get(Type::getInt32Ty(Ctx), {}, false),
@@ -320,28 +322,8 @@ int getBasicBlockCountIfNotSkipped(const Function& F)
     if (F.size() == 1) {
         return -1;
     }
-    if (functionName == "IndirectConditionalJumpFunc" || functionName == "IndirectCallFunc") {
+    if (shouldSkip(F, branch2call)) {
         return -1;
-    }
-
-    if (F.empty() || F.hasLinkOnceLinkage() || F.getSection() == ".text.startup") {
-        return -1;
-    }
-
-    if (branch2call_32.model == 2) {
-        if (std::find(branch2call_32.enable_function.begin(),
-                branch2call_32.enable_function.end(),
-                functionName)
-            == branch2call_32.enable_function.end()) {
-            return -1;
-        }
-    } else if (branch2call_32.model == 3) {
-        if (std::find(branch2call_32.disable_function.begin(),
-                branch2call_32.disable_function.end(),
-                functionName)
-            != branch2call_32.disable_function.end()) {
-            return -1;
-        }
     }
     return F.size();
 }
@@ -356,7 +338,7 @@ PreservedAnalyses Branch2Call_32::run(llvm::Module& M,
     //   int PtrSize =
     //       Data.getTypeAllocSize(Type::getInt8Ty(F.getContext())->getPointerTo());
     //   Type *PtrValueType = Type::getIntNTy(F.getContext(), PtrSize * 8);
-    readConfig("/home/zzzccc/cxzz/KObfucator/config/config.json");
+    readConfig("/home/zzzccc/cxzz/Generic_obfuscator/config/config.json");
     if (branch2call_32.model) {
         for (llvm::Function& F : M) {
             if (getBasicBlockCountIfNotSkipped(F) != -1) {
@@ -365,7 +347,6 @@ PreservedAnalyses Branch2Call_32::run(llvm::Module& M,
                 }
                 FunctionIndexMap[&F] = function_count++;
             }
-            llvm::outs() << "Final function count: " << function_count << "\n";
         }
         for (llvm::Function& F : M) {
             BBNumbering.clear();
@@ -380,23 +361,24 @@ PreservedAnalyses Branch2Call_32::run(llvm::Module& M,
             for (auto& BB : F) {
                 auto* Terminator = BB.getTerminator();
                 if (!Terminator) {
-                    llvm::errs() << "Terminator is null for basic block: " << BB.getName()
-                                 << "\n";
-                    F.print(llvm::outs());
+                    // llvm::errs() << "Terminator is null for basic block: " << BB.getName()
+                    //              << "\n";
+                    // F.print(llvm::outs());
                     continue;
                 }
                 auto* BI = dyn_cast<BranchInst>(Terminator);
 
                 if (BI) {
                     unsigned FunctionID = FunctionIndexMap[&F];
-                    createIndirectCallFunc(M);
-                    createIndirectConditionalJumpFunc(M);
+                    creategeneric_obfuscatorSpringboardFunction(M);
+                    creategeneric_obfuscatorSpringboardFunctionCond(M);
                     ProcessPredecessorsAndInsertFuncCall(
-                        F, BB, FunctionID, F.getParent()->getFunction("IndirectCallFunc"),
-                        F.getParent()->getFunction("IndirectConditionalJumpFunc"));
+                        F, BB, FunctionID, F.getParent()->getFunction("generic_obfuscatorSpringboardFunction"),
+                        F.getParent()->getFunction("generic_obfuscatorSpringboardFunctionCond"));
                     ++block_count;
                 }
             }
+            PrintSuccess("Branch2call-32 successfully process func ", F.getName().str());
         }
     }
 
